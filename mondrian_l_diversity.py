@@ -12,6 +12,7 @@ gl_result = []
 gl_QI_ranges = []
 gl_QI_dict = []
 gl_QI_order = []
+gl_att_trees = []
 
 
 class Partition:
@@ -185,10 +186,11 @@ def anonymize(partition):
     anonymize(Partition(rhs))
 
 
-def mondrian_l_diversity(data, L):
+def mondrian_l_diversity(att_trees, data, L):
     """
     """
-    global gl_L, gl_result, gl_QI_len
+    global gl_L, gl_result, gl_QI_len, gl_att_trees
+    gl_att_trees = att_trees
     gl_QI_len = len(data[0])-1
     gl_L = L
     gl_result = []
