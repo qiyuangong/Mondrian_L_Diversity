@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #coding=utf-8
-from mondrian import mondrian
+from mondrian_l_diversity import mondrian_l_diversity
 from utils.read_data import read_data
 from utils.save_result import save_to_file
 import sys
@@ -17,7 +17,7 @@ if __name__ == '__main__':
     data = read_data()
     # remove duplicate items
     print "Begin Partition"
-    result = mondrian(data, K)
+    result = mondrian_l_diversity(data, K)
     save_to_file(result)
     print "Finish Partition!!"
     # print "Begin Evaluation"

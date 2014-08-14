@@ -185,7 +185,7 @@ def anonymize(partition):
     anonymize(Partition(rhs))
 
 
-def mondrian(data, L):
+def mondrian_l_diversity(data, L):
     """
     """
     global gl_L, gl_result, gl_QI_len

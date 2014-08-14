@@ -4,8 +4,7 @@
 # Read data and read tree fuctions for INFORMS data
 # user att ['DUID','PID','DUPERSID','DOBMM','DOBYY','SEX','RACEX','RACEAX','RACEBX','RACEWX','RACETHNX','HISPANX','HISPCAT','EDUCYEAR','Year','marry','income','poverty']
 # condition att ['DUID','DUPERSID','ICD9CODX','year']
-
-import heapq
+from models.gentree import GenTree
 
 __DEBUG = False
 gl_useratt = ['DUID','PID','DUPERSID','DOBMM','DOBYY','SEX','RACEX','RACEAX','RACEBX','RACEWX','RACETHNX','HISPANX','HISPCAT','EDUCYEAR','Year','marry','income','poverty']
@@ -13,16 +12,59 @@ gl_conditionatt = ['DUID','DUPERSID','ICD9CODX','year']
 # Only 5 relational attributes and 1 transaction attribute are selected (according to Poulis's paper)
 gl_attlist = [3,4,6,13,16]
 
-gl_att_ranges = []
-gl_att_order = []
 
-__DEBUG = False
-
-
-def read_data():
+def read_tree(flag=0):
+    """read tree from data/tree_*.txt, store them in att_tree
     """
-    read microda for *.txt and return read data
+    att_names = []
+    att_trees = []
+    for t in gl_attlist:
+        att_names.append(gl_useratt[t])
+    if flag:
+        att_names.append('ICD9CODX')
+    else:
+        att_names.append('even')
+    for t in att_names:
+        att_trees.append(read_tree_file(t))
+    return att_trees
+
+  
+def read_tree_file(treename):
+    """read tree data from treename
     """
+    leaf_to_path = {}
+    att_tree = {}
+    prefix = 'data/treefile_'
+    postfix = ".txt"
+    treefile = open(prefix + treename + postfix,'rU')
+    att_tree['*'] = GenTree('*')
+    if __DEBUG:
+        print "Reading Tree" + treename
+    for line in treefile:
+        #delete \n
+        if len(line) <= 1:
+            break
+        line = line.strip()
+        temp = line.split(';')
+        # copy temp
+        temp.reverse()
+        for i, t in enumerate(temp):
+            isleaf = False
+            if i == len(temp)-1: 
+                isleaf = True
+            if not t in att_tree:
+                # always satisfy
+                att_tree[t] = GenTree(t, att_tree[temp[i - 1]], isleaf)
+    if __DEBUG:
+        print "Nodes No. = %d" % att_tree['*'].support
+    treefile.close()
+    return att_tree    
+
+
+def read_data(flag=0):
+    """read microda for *.txt and return read data
+    """
+    """read microda for *.txt and return read data"""
     data = []
     userfile = open('data/demographics05test.csv', 'rU')
     conditionfile = open('data/conditions05.csv', 'rU')
