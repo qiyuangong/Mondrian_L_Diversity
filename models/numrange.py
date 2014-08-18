@@ -18,3 +18,6 @@ class NumRange(object):
         self.sort_value = sort_value[:]
         self.support = support.copy()
         self.range = len(sort_value)
+        self.dict = {}
+        for i, v in enumerate(sort_value):
+            self.dict[v] = i

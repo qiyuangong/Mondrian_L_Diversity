@@ -10,8 +10,6 @@ gl_QI_len = 10
 gl_L = 0
 gl_result = []
 gl_QI_ranges = []
-gl_QI_dict = []
-gl_QI_order = []
 gl_att_trees = []
 
 
@@ -63,24 +61,6 @@ def cmp_str(element1, element2):
     """compare number in str format correctley
     """
     return cmp(int(element1), int(element2))
-
-def static_values(data):
-    """sort all attributes, get order and range
-    """
-    att_values = []
-    for i in range(gl_QI_len):
-        att_values.append(set())
-        gl_QI_dict.append({})
-    for temp in data:
-        for i in range(gl_QI_len):
-            att_values[i].add(temp[i])
-    for i in range(gl_QI_len):
-        value_list = list(att_values[i])
-        gl_QI_ranges.append(len(value_list))
-        value_list.sort(cmp=cmp_str)
-        gl_QI_order.append(value_list[:])
-        for index, temp in enumerate(value_list):
-            gl_QI_dict[i][temp] = index
 
 
 def getNormalizedWidth(partition, index):
@@ -160,30 +140,46 @@ def anonymize(partition):
     if dim == -1:
         print "Error: dim=-1"
         pdb.set_trace()
-    frequency = frequency_set(partition, dim)
-    splitVal = find_median(frequency)
-    if splitVal == '':
-        print "Error: splitVal= null"
-        pdb.set_trace()
-    middle = gl_QI_dict[dim][splitVal]
-    # (dim, partition.low[dim], gl_QI_dict[dim][splitVal])
-    lhs = []
-    # (dim, gl_QI_dict[dim][splitVal], partition.high[dim]
-    rhs = []
-    for temp in partition.member:
-        pos = gl_QI_dict[dim][temp[dim]]
-        if pos <= middle:
-            # lhs = [low, means]
-            lhs.append(temp)
-        else:
-            # rhs = (means, high)
-            rhs.append(temp)
-    if len(lhs) < gl_L or len(rhs) < gl_L:
-        gl_result.append(partition)
-        return
-    # anonymize sub-partition
-    anonymize(Partition(lhs))
-    anonymize(Partition(rhs))
+    if instances(gl_att_trees[dim], NumRange):
+        # numeric attributes
+        frequency = frequency_set(partition, dim)
+        splitVal = find_median(frequency)
+        if splitVal == '':
+            print "Error: splitVal= null"
+            pdb.set_trace()
+        middle = gl_att_trees[dim].dict[splitVal]
+        # (dim, partition.low[dim], gl_QI_dict[dim][splitVal])
+        lhs = []
+        # (dim, gl_QI_dict[dim][splitVal], partition.high[dim]
+        rhs = []
+        for temp in partition.member:
+            pos = gl_att_trees[dim].dict[temp[dim]]
+            if pos <= middle:
+                # lhs = [low, means]
+                lhs.append(temp)
+            else:
+                # rhs = (means, high)
+                rhs.append(temp)
+        if len(lhs) < gl_L or len(rhs) < gl_L:
+            gl_result.append(partition)
+            return
+        # anonymize sub-partition
+        anonymize(Partition(lhs))
+        anonymize(Partition(rhs))
+    else:
+        # normal attributes
+        sub_partition = [] * gl_QI_len
+        sub_node = [t for t in partition.middle.child]
+        for temp in partition.member:
+            qid_value =  temp[dim]
+            for i, node in enumerate(sub_node):
+                try:
+                    node.cover[qid_value]
+                    sub_partition[i].append(temp)
+                except:
+                    continue
+        for p in sub_partition:
+            anonymize(Partition(p))
 
 
 def mondrian_l_diversity(att_trees, data, L):
