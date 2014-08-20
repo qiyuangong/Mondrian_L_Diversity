@@ -3,7 +3,8 @@
 
 import heapq
 import pdb
-
+from models.numrange import NumRange
+from models.gentree import GenTree
 
 __DEBUG = True
 gl_QI_len = 10
@@ -122,6 +123,7 @@ def find_median(frequency):
 def anonymize(partition):
     """recursively partition groups until not allowable
     """
+    global gl_result
     if len(partition.member) < 2*gl_L:
         gl_result.append(partition)
         return
@@ -170,7 +172,11 @@ def anonymize(partition):
     else:
         # normal attributes
         sub_partition = [] * gl_QI_len
-        sub_node = [t for t in partition.middle.child]
+        if partition.middle[dim] != '*':
+            splitVal = gl_att_trees[dim].cover[partition.middle[dim]]    
+        else:
+            splitVal = gl_att_trees[dim]
+        sub_node = [t for t in splitVal.child]        
         for temp in partition.member:
             qid_value =  temp[dim]
             for i, node in enumerate(sub_node):
@@ -210,8 +216,9 @@ def mondrian_l_diversity(att_trees, data, L):
     for i in range(gl_QI_len):
         if isinstance(gl_att_trees[i], NumRange):
             gl_QI_range.append(gl_att_trees[i].range)
+            middle.append(gl_att_trees[i].value)
         else:
-            gl_QI_range.append(gl_att_trees.support)
+            gl_QI_range.append(gl_att_trees[i].support)
         middle.append(gl_att_trees[i].value)
     partition = Partition(data, gl_QI_range[:], middle)
     anonymize(partition)

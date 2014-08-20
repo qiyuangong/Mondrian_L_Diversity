@@ -6,6 +6,7 @@
 # condition att ['DUID','DUPERSID','ICD9CODX','year']
 from models.gentree import GenTree
 from models.numrange import NumRange
+import pickle
 
 
 __DEBUG = False
@@ -22,38 +23,34 @@ def cmp_str(element1, element2):
     return cmp(int(element1), int(element2))
 
 
-def read_tree(flag=0):
+def read_tree():
     """read tree from data/tree_*.txt, store them in att_tree
     """
     att_names = []
     att_trees = []
     for t in gl_attlist:
         att_names.append(gl_useratt[t])
-    if flag:
-        att_names.append('ICD9CODX')
-    else:
-        att_names.append('even')
     for i in range(len(att_names)):
         if gl_if_cat[i]:
-            att_trees.append(read_tree_file(att_names[i]))
+            att_trees.append(read_tree_file(att_names[i])['*'])
         else:
-            att_trees.apppend(pickle_static(gl_attlist[i]))
+            att_trees.append(pickle_static(gl_attlist[i]))
     return att_trees
 
   
 def pickle_static(index):
     """pickle sorted values of BMS-WebView-2 to BMS_Static_value.pickle
     """
-    userfile = open('../data/demographics05test.csv', 'rU')
+    userfile = open('data/demographics05test.csv', 'rU')
     need_static = False
     support = {}
     try:
-        static_file = open('../data/income_Static_value.pickle', 'rb')
+        static_file = open('data/income_Static_value.pickle', 'rb')
         print "Data exist..."
-        (support,static_value)) = pickle.load(static_file)
+        (support,sort_value) = pickle.load(static_file)
     except:
         need_static = True
-        static_file = open('../data/income_Static_value.pickle', 'wb')
+        static_file = open('data/income_Static_value.pickle', 'wb')
         print "Pickle Data..."
         for i, line in enumerate(userfile):
             line = line.strip()
@@ -65,7 +62,7 @@ def pickle_static(index):
                 support[row[index]] += 1
             except:
                 support[row[index]] = 1
-        sort_value = support.values()
+        sort_value = support.keys()
         sort_value.sort(cmp=cmp_str)
         pickle.dump((support,sort_value), static_file)
     static_file.close()
