@@ -108,10 +108,6 @@ def find_median(frequency):
     if middle < gl_L:
         print "Error: size of group less than 2*K"
         return ''
-    # if __DEBUG:
-    #     print 'total = %d' % total
-    #     print 'middle = %d' % middle
-    #     pdb.set_trace()
     index = 0
     for t in value_list:
         index += frequency[t]
@@ -165,7 +161,7 @@ def anonymize(partition):
             else:
                 # rhs = (means, high)
                 rhs.append(temp)
-        if len(lhs) < gl_L or len(rhs) < gl_L:
+        if check_L_diversity(lhs) == False and  check_L_diversity(rhs) == False:
             gl_result.append(partition)
             return
         # anonymize sub-partition
@@ -183,8 +179,21 @@ def anonymize(partition):
                     sub_partition[i].append(temp)
                 except:
                     continue
+        flag = True
         for p in sub_partition:
-            anonymize(Partition(p))
+            if check_L_diversity(p) == False:
+                flag = False
+                break
+        if flag:
+            for i,p in enumerate(sub_partition):
+                wtemp = width[:]
+                mtemp = middle[:]
+                wtemp[dim] = sub_node[i].support
+                mtemp[dim] = sub_node[i].value
+                anonymize(Partition(p,wtemp, mtemp))
+        else:
+            gl_result.append(partition)
+            return
 
 
 def mondrian_l_diversity(att_trees, data, L):
