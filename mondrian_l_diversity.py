@@ -9,52 +9,45 @@ __DEBUG = True
 gl_QI_len = 10
 gl_L = 0
 gl_result = []
-gl_QI_ranges = []
 gl_att_trees = []
+gl_QI_range = []
 
 
 class Partition:
 
     """Class for Group, which is used to keep records 
     Store tree node in instances.
+    self.width width of this partition on each domain
+    self.middle save the generalization result of this partition
     self.member: records in group
-    self.low: lower point 
-    self.high: higher point 
     """
 
-    def __init__(self, data):
+    def __init__(self, data, width, middle):
         """
         split_tuple = (index, low, high)
         """
-        self.low = [10000000000000]*gl_QI_len
-        self.high = [-1]*gl_QI_len
-        self.check = [0]*gl_QI_len
+        self.width = width[:]
+        self.middle = middle[:]
         self.member = data[:]
-        # if len(split_tuple) > 0:
-        #     self.check[split_tuple[0]] = split_tuple[0]
-        #     self.low[split_tuple[0]] = split_tuple[1]
-        #     self.high = split_tuple[2]
-        for temp in self.member:
-            for index in range(gl_QI_len):
-                pos = gl_QI_dict[index][temp[index]]
-                if pos < self.low[index]:
-                    self.low[index] = pos
-                elif pos > self.high[index]:
-                    self.high[index] = pos
 
-    def get_bound(self):
-        """
-        get lower(low) and upper(high) bounds of members
-        """
-        for temp in self.member:
-            for index in gl_QI_len:
-                if self.check[index]:
-                    continue
-                pos = gl_QI_dict[i][temp[i]]
-                if pos < self.low[index]:
-                    self.low[index] = pos
-                elif pos > self.high[index]:
-                    self.high[index] = pos
+
+def check_L_diversity(partition):
+    """check if partition satisfy l-diversity
+    """
+    sa_dict = {}
+    if isinstance(partition, Partition):
+        ltemp = partition.member
+    else:
+        ltemp = partition
+    for temp in partition.member:
+        stemp = ';'.join(temp)
+        try:
+            sa_dict[stemp] += 1
+        except:
+            sa_dict[stemp] = 1
+        if len(sa_dict) >= gl_L:
+            return True
+    return False
 
 
 def cmp_str(element1, element2):
@@ -67,8 +60,8 @@ def getNormalizedWidth(partition, index):
     """return Normalized width of partition
     similar to NCP
     """
-    width = partition.high[index] - partition.low[index]
-    return width * 1.0 / gl_QI_ranges[index]
+    width = partition.width[index]
+    return width * 1.0 / gl_QI_range[index]
 
 
 def choose_dimension(partition):
@@ -105,7 +98,7 @@ def frequency_set(partition, dim):
 
 
 def find_median(frequency):
-    """find the middle of the partition, return splitVal
+    """find the middle of the partition, return left width, righth width and splitVal
     """
     splitVal = ''
     value_list = frequency.keys()
@@ -137,24 +130,36 @@ def anonymize(partition):
         gl_result.append(partition)
         return
     dim = choose_dimension(partition)
+    pwidth = partition.width[:]
+    pmiddle = partition.middle[:]
     if dim == -1:
         print "Error: dim=-1"
         pdb.set_trace()
-    if instances(gl_att_trees[dim], NumRange):
+    if isinstance(gl_att_trees[dim], NumRange):
         # numeric attributes
         frequency = frequency_set(partition, dim)
         splitVal = find_median(frequency)
         if splitVal == '':
             print "Error: splitVal= null"
             pdb.set_trace()
-        middle = gl_att_trees[dim].dict[splitVal]
-        # (dim, partition.low[dim], gl_QI_dict[dim][splitVal])
+        middle_pos = gl_att_trees[dim].dict[splitVal]
+        lmiddle = pmiddle[:]
+        lwidth = pwidth[:]
+        lwidth[dim] = middle_pos + 1
+        lmiddle[dim] 
+        temp = pmiddle[dim].split(',')
+        temp[-1] = splitVal
+        lmiddle[dim] = ','.join(temp)
+        rwidth = pwidth[:]
+        rwidth[dim] = width[dim] - middle_pos - 1
+        temp = pmiddle[dim].split(',')
+        temp[0] = splitVal
+        lmiddle[dim] = ','.join(temp)
         lhs = []
-        # (dim, gl_QI_dict[dim][splitVal], partition.high[dim]
         rhs = []
         for temp in partition.member:
             pos = gl_att_trees[dim].dict[temp[dim]]
-            if pos <= middle:
+            if pos <= middle_pos:
                 # lhs = [low, means]
                 lhs.append(temp)
             else:
@@ -164,8 +169,8 @@ def anonymize(partition):
             gl_result.append(partition)
             return
         # anonymize sub-partition
-        anonymize(Partition(lhs))
-        anonymize(Partition(rhs))
+        anonymize(Partition(lhs,lwidth,lmiddle))
+        anonymize(Partition(rhs,rwidth,rmiddle))
     else:
         # normal attributes
         sub_partition = [] * gl_QI_len
@@ -185,25 +190,26 @@ def anonymize(partition):
 def mondrian_l_diversity(att_trees, data, L):
     """
     """
-    global gl_L, gl_result, gl_QI_len, gl_att_trees
+    global gl_L, gl_result, gl_QI_len, gl_att_trees, gl_QI_range
     gl_att_trees = att_trees
+    middle = []
     gl_QI_len = len(data[0])-1
     gl_L = L
     gl_result = []
     result = []
-    static_values(data)
-    partition = Partition(data)
+    gl_QI_range = []
+    for i in range(gl_QI_len):
+        if isinstance(gl_att_trees[i], NumRange):
+            gl_QI_range.append(gl_att_trees[i].range)
+        else:
+            gl_QI_range.append(gl_att_trees.support)
+        middle.append(gl_att_trees[i].value)
+    partition = Partition(data, gl_QI_range[:], middle)
     anonymize(partition)
     for p in gl_result:
         for temp in p.member:
-            for index in range(gl_QI_len):
-                if type(temp[index]) == int:
-                    temp[index] = '%d,%d' % (gl_QI_order[index][partition.low[index]], \
-                        gl_QI_order[index][partition.high[index]])
-                elif type(temp[index]) == str:
-                    temp[index] = gl_QI_order[index][partition.low[index]] + ',' + \
-                        gl_QI_order[index][partition.high[index]]
-        result.append(temp)
+            temp = partition.middle[:]
+            result.append(temp)
     if __DEBUG:
         print "size of partitions"
         print [len(t.member) for t in gl_result]
