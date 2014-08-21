@@ -137,6 +137,8 @@ def read_data(flag=0):
             conditiondata[row[1]].append(row)
         except:
             conditiondata[row[1]] = [row]
+    for k, v in conditiondata.iteritems():
+        v.sort()
     hashdata = {}
     for k, v in userdata.iteritems():
         if k in conditiondata:

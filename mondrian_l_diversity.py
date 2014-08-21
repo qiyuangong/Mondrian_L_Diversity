@@ -25,11 +25,11 @@ class Partition:
 
     def __init__(self, data, width, middle):
         """
-        split_tuple = (index, low, high)
+        initialize with data, width and middle
         """
+        self.member = data[:]
         self.width = width[:]
         self.middle = middle[:]
-        self.member = data[:]
 
 
 def check_L_diversity(partition):
@@ -40,8 +40,8 @@ def check_L_diversity(partition):
         ltemp = partition.member
     else:
         ltemp = partition
-    for temp in partition.member:
-        stemp = ';'.join(temp)
+    for temp in ltemp:
+        stemp = ';'.join(temp[-1])
         try:
             sa_dict[stemp] += 1
         except:
@@ -124,9 +124,6 @@ def anonymize(partition):
     """recursively partition groups until not allowable
     """
     global gl_result
-    if len(partition.member) < 2*gl_L:
-        gl_result.append(partition)
-        return
     dim = choose_dimension(partition)
     pwidth = partition.width[:]
     pmiddle = partition.middle[:]
@@ -152,7 +149,7 @@ def anonymize(partition):
         rwidth[dim] = width[dim] - middle_pos - 1
         temp = pmiddle[dim].split(',')
         temp[0] = splitVal
-        lmiddle[dim] = ','.join(temp)
+        rmiddle[dim] = ','.join(temp)
         lhs = []
         rhs = []
         for temp in partition.member:
@@ -165,26 +162,34 @@ def anonymize(partition):
                 rhs.append(temp)
         if check_L_diversity(lhs) == False and  check_L_diversity(rhs) == False:
             gl_result.append(partition)
+            pdb.set_trace()
             return
         # anonymize sub-partition
         anonymize(Partition(lhs,lwidth,lmiddle))
         anonymize(Partition(rhs,rwidth,rmiddle))
     else:
         # normal attributes
-        sub_partition = [] * gl_QI_len
         if partition.middle[dim] != '*':
             splitVal = gl_att_trees[dim].cover[partition.middle[dim]]    
         else:
             splitVal = gl_att_trees[dim]
-        sub_node = [t for t in splitVal.child]        
+        sub_node = [t for t in splitVal.child]    
+        sub_partition = []    
+        for i in range(len(sub_node)):
+            sub_partition.append([])
         for temp in partition.member:
             qid_value =  temp[dim]
             for i, node in enumerate(sub_node):
+                # pdb.set_trace()
                 try:
                     node.cover[qid_value]
                     sub_partition[i].append(temp)
+                    break
                 except:
                     continue
+        # if __DEBUG:
+        #     print "sub_partition"
+        #     print [len(t) for t in sub_partition]
         flag = True
         for p in sub_partition:
             if check_L_diversity(p) == False:
@@ -192,13 +197,14 @@ def anonymize(partition):
                 break
         if flag:
             for i,p in enumerate(sub_partition):
-                wtemp = width[:]
-                mtemp = middle[:]
+                wtemp = pwidth[:]
+                mtemp = pmiddle[:]
                 wtemp[dim] = sub_node[i].support
                 mtemp[dim] = sub_node[i].value
-                anonymize(Partition(p,wtemp, mtemp))
+                anonymize(Partition(p, wtemp, mtemp))
         else:
             gl_result.append(partition)
+            pdb.set_trace()
             return
 
 
@@ -216,7 +222,6 @@ def mondrian_l_diversity(att_trees, data, L):
     for i in range(gl_QI_len):
         if isinstance(gl_att_trees[i], NumRange):
             gl_QI_range.append(gl_att_trees[i].range)
-            middle.append(gl_att_trees[i].value)
         else:
             gl_QI_range.append(gl_att_trees[i].support)
         middle.append(gl_att_trees[i].value)
@@ -230,4 +235,5 @@ def mondrian_l_diversity(att_trees, data, L):
         print "size of partitions"
         print [len(t.member) for t in gl_result]
         pdb.set_trace()
+        # pdb.set_trace()
     return result
