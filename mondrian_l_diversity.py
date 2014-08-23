@@ -6,6 +6,7 @@ import pdb
 from models.numrange import NumRange
 from models.gentree import GenTree
 
+
 __DEBUG = True
 gl_QI_len = 10
 gl_L = 0
@@ -47,8 +48,8 @@ def check_L_diversity(partition):
             sa_dict[stemp] += 1
         except:
             sa_dict[stemp] = 1
-        if len(sa_dict) >= gl_L:
-            return True
+            if len(sa_dict) >= gl_L:
+                return True
     return False
 
 
@@ -79,8 +80,8 @@ def choose_dimension(partition):
         if normWidth > max_witdh:
             max_witdh = normWidth
             max_dim = i
-    if __DEBUG:
-        print "normWidth=%f" % max_witdh
+    # if __DEBUG:
+    #     print "normWidth=%f" % max_witdh
     if max_witdh > 1:
         pdb.set_trace()
     # if __DEBUG and max_witdh == 0:
@@ -172,7 +173,7 @@ def anonymize(partition):
                 else:
                     # rhs = (means, high)
                     rhs.append(temp)
-            if check_L_diversity(lhs) == False and  check_L_diversity(rhs) == False:
+            if check_L_diversity(lhs) == False or  check_L_diversity(rhs) == False:
                 partition.allow[dim] = 0
                 continue
             # anonymize sub-partition
@@ -195,7 +196,6 @@ def anonymize(partition):
             for temp in partition.member:
                 qid_value =  temp[dim]
                 for i, node in enumerate(sub_node):
-                    # pdb.set_trace()
                     try:
                         node.cover[qid_value]
                         sub_partition[i].append(temp)
@@ -221,8 +221,7 @@ def anonymize(partition):
             else:
                 partition.allow[dim] = 0
                 continue
-    if sum(partition.allow) == 0:
-        gl_result.append(partition)
+    gl_result.append(partition)
 
 
 def mondrian_l_diversity(att_trees, data, L):
@@ -245,13 +244,23 @@ def mondrian_l_diversity(att_trees, data, L):
             middle.append(gl_att_trees[i]['*'].value)
     partition = Partition(data, gl_QI_range[:], middle)
     anonymize(partition)
+    ncp = 0.0
     for p in gl_result:
+        rncp = 0.0
+        for i in range(gl_QI_len):
+            rncp += getNormalizedWidth(p, i)
         for temp in p.member:
             temp = partition.middle[:]
             result.append(temp)
+        rncp *= len(p.member)
+        ncp += rncp
+    ncp /= gl_QI_len
+    ncp /= len(data)
+    ncp *= 100
     if __DEBUG:
         print "size of partitions"
         print [len(t.member) for t in gl_result]
+        print "NCP = %.2f %%" % ncp
         pdb.set_trace()
         # pdb.set_trace()
     return result
