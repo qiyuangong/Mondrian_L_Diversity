@@ -32,7 +32,7 @@ def read_tree():
         att_names.append(gl_useratt[t])
     for i in range(len(att_names)):
         if gl_if_cat[i]:
-            att_trees.append(read_tree_file(att_names[i])['*'])
+            att_trees.append(read_tree_file(att_names[i]))
         else:
             att_trees.append(pickle_static(gl_attlist[i]))
     return att_trees
