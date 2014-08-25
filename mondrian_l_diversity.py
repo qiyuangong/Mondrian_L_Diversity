@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #coding=utf-8
 
-import heapq
+
 import pdb
 from models.numrange import NumRange
 from models.gentree import GenTree
@@ -19,9 +19,10 @@ class Partition:
 
     """Class for Group, which is used to keep records 
     Store tree node in instances.
-    self.width width of this partition on each domain
-    self.middle save the generalization result of this partition
+    self.width: width of this partition on each domain
+    self.middle: save the generalization result of this partition
     self.member: records in group
+    self.allow: 0 donate that not allow to split, 1 donate can be split
     """
 
     def __init__(self, data, width, middle):
@@ -68,9 +69,8 @@ def getNormalizedWidth(partition, index):
 
 
 def choose_dimension(partition):
-    """chooss dim with largest normWidth
+    """chooss dim with largest normlized Width
     """
-    # max_wi
     max_witdh = -1
     max_dim = -1
     for i in range(gl_QI_len):
@@ -80,12 +80,8 @@ def choose_dimension(partition):
         if normWidth > max_witdh:
             max_witdh = normWidth
             max_dim = i
-    # if __DEBUG:
-    #     print "normWidth=%f" % max_witdh
     if max_witdh > 1:
         pdb.set_trace()
-    # if __DEBUG and max_witdh == 0:
-    #     print "all QI values are equal"
     return max_dim
 
 
@@ -107,7 +103,8 @@ def frequency_set(partition, dim):
 
 
 def find_median(frequency):
-    """find the middle of the partition, return left width, righth width and splitVal
+    """find the middle of the partition, 
+    return splitVal
     """
     splitVal = ''
     value_list = frequency.keys()
@@ -202,9 +199,6 @@ def anonymize(partition):
                         break
                     except:
                         continue
-            # if __DEBUG:
-            #     print "sub_partition"
-            #     print [len(t) for t in sub_partition]
             flag = True
             for p in sub_partition:
                 if check_L_diversity(p) == False:
@@ -262,5 +256,4 @@ def mondrian_l_diversity(att_trees, data, L):
         print [len(t.member) for t in gl_result]
         print "NCP = %.2f %%" % ncp
         pdb.set_trace()
-        # pdb.set_trace()
     return result

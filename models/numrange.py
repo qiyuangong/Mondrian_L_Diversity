@@ -5,12 +5,11 @@
 class NumRange(object):
 
     """Class for Generalization hierarchies (Taxonomy Tree). 
-    Store tree node in instances.
-    self.value: node value
-    self.level: tree level (top is 0)
-    self.support: support
-    self.parent: ancestor node list
-    self.child: direct successor node list
+    Store numeric node in instances.
+    self.sort_value: sorted values, which may help get the normalized width
+    self.value: node value, e.g. '10,20'
+    self.support: support of all values, dict
+    self.range: (max-min), used for normalized width
     self.cover: leaves nodes of current node 
     """
 
