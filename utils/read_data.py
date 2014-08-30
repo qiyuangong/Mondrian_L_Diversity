@@ -137,19 +137,21 @@ def read_data(flag=0):
             conditiondata[row[1]].append(row)
         except:
             conditiondata[row[1]] = [row]
-    for k, v in conditiondata.iteritems():
-        v.sort()
     hashdata = {}
     for k, v in userdata.iteritems():
         if k in conditiondata:
-            temp = []
+            # ingnore duplicate values
+            temp = set()
             for t in conditiondata[k]:
-                temp.append(t[2])
+                temp.add(t[2])
             hashdata[k] = []
             for i in range(len(gl_attlist)):
                 index = gl_attlist[i]
                 hashdata[k].append(v[index])
-            hashdata[k].append(temp)
+            stemp = list(temp)
+            # sort values
+            stemp.sort()
+            hashdata[k].append(stemp[:])
     for k, v in hashdata.iteritems():
         data.append(v)
     userfile.close()
