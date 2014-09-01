@@ -7,9 +7,9 @@ import pdb
 # Poulis set k=25, m=2 as default!
 
 if __name__ == '__main__':
-    K = 10
+    L = 10
     try:
-        K = int(sys.argv[1])
+        L = int(sys.argv[1])
     except:
         pass
     att_trees = read_tree()
@@ -17,5 +17,5 @@ if __name__ == '__main__':
     data = read_data()
     # remove duplicate items
     print "Begin Partition"
-    result = mondrian_l_diversity(att_trees, data, K)
+    result = mondrian_l_diversity(att_trees, data, L)
     print "Finish Partition!!"

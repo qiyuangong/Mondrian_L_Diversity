@@ -115,14 +115,16 @@ def find_median(frequency):
         print "Error: size of group less than 2*K"
         return ''
     index = 0
-    for t in value_list:
+    split_index = 0
+    for i, t in enumerate(value_list):
         index += frequency[t]
         if index >= middle:
             splitVal = t
+            split_index = i
             break
     else:
         print "Error: cannot find splitVal"
-    return splitVal
+    return (splitVal, split_index)
 
 
 def anonymize(partition):
@@ -142,34 +144,37 @@ def anonymize(partition):
         if isinstance(gl_att_trees[dim], NumRange):
             # numeric attributes
             frequency = frequency_set(partition, dim)
-            splitVal = find_median(frequency)
+            (splitVal, split_index) = find_median(frequency)
             if splitVal == '':
                 print "Error: splitVal= null"
                 pdb.set_trace()
             middle_pos = gl_att_trees[dim].dict[splitVal]
             lmiddle = pmiddle[:]
-            lwidth = pwidth[:]
-            lwidth[dim] = middle_pos + 1
             lmiddle[dim] 
             temp = pmiddle[dim].split(',')
             temp[-1] = splitVal
             lmiddle[dim] = ','.join(temp)
             rmiddle = pmiddle[:]
-            rwidth = pwidth[:]
-            rwidth[dim] = pwidth[dim] - middle_pos - 1
             temp = pmiddle[dim].split(',')
             temp[0] = splitVal
             rmiddle[dim] = ','.join(temp)
             lhs = []
             rhs = []
+            lcount = rcount  = 0
             for temp in partition.member:
                 pos = gl_att_trees[dim].dict[temp[dim]]
                 if pos <= middle_pos:
                     # lhs = [low, means]
                     lhs.append(temp)
+                    lcount += 1
                 else:
                     # rhs = (means, high)
                     rhs.append(temp)
+                    rcount += 1
+            lwidth = pwidth[:]
+            rwidth = pwidth[:]
+            lwidth[dim] = split_index
+            rwidth[dim] = pwidth[dim] - split_index
             if check_L_diversity(lhs) == False or  check_L_diversity(rhs) == False:
                 partition.allow[dim] = 0
                 continue
@@ -221,6 +226,7 @@ def anonymize(partition):
 def mondrian_l_diversity(att_trees, data, L):
     """
     """
+    print "L=%d" % L
     global gl_L, gl_result, gl_QI_len, gl_att_trees, gl_QI_range
     gl_att_trees = att_trees
     middle = []
@@ -243,9 +249,9 @@ def mondrian_l_diversity(att_trees, data, L):
         rncp = 0.0
         for i in range(gl_QI_len):
             rncp += getNormalizedWidth(p, i)
-        for temp in p.member:
-            temp = partition.middle[:]
-            result.append(temp)
+        temp = p.middle
+        for i in range(len(p.member)):
+            result.append(temp[:])
         rncp *= len(p.member)
         ncp += rncp
     ncp /= gl_QI_len
