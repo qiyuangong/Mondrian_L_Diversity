@@ -25,14 +25,17 @@ class Partition:
     self.allow: 0 donate that not allow to split, 1 donate can be split
     """
 
-    def __init__(self, data, width, middle):
+    def __init__(self, data, width, middle, allow=None):
         """
         initialize with data, width and middle
         """
         self.member = data[:]
         self.width = width[:]
         self.middle = middle[:]
-        self.allow = [1] * gl_QI_len
+        if allow == None:
+            self.allow = [1] * gl_QI_len
+        else:
+            self.allow = allow[:]
 
 
 def check_L_diversity(partition):
@@ -134,8 +137,9 @@ def anonymize(partition):
     if sum(partition.allow) == 0 or len(partition.member) < 2*gl_L:
         gl_result.append(partition)
         return
-    pwidth = partition.width[:]
-    pmiddle = partition.middle[:]
+    pwidth = partition.width
+    pmiddle = partition.middle
+    pallow = partition.allow
     for i in range(gl_QI_len):
         dim = choose_dimension(partition)
         if dim == -1:
@@ -150,27 +154,22 @@ def anonymize(partition):
                 pdb.set_trace()
             middle_pos = gl_att_trees[dim].dict[splitVal]
             lmiddle = pmiddle[:]
-            lmiddle[dim] 
-            temp = pmiddle[dim].split(',')
-            temp[-1] = splitVal
-            lmiddle[dim] = ','.join(temp)
             rmiddle = pmiddle[:]
             temp = pmiddle[dim].split(',')
-            temp[0] = splitVal
-            rmiddle[dim] = ','.join(temp)
+            low = temp[0]
+            high = temp[1]
+            lmiddle[dim] = low + ',' + splitVal
+            rmiddle[dim] = splitVal + ',' + high
             lhs = []
             rhs = []
-            lcount = rcount  = 0
             for temp in partition.member:
                 pos = gl_att_trees[dim].dict[temp[dim]]
                 if pos <= middle_pos:
                     # lhs = [low, means]
                     lhs.append(temp)
-                    lcount += 1
                 else:
-                    # rhs = (means, high)
+                    # rhs = (means, high]
                     rhs.append(temp)
-                    rcount += 1
             lwidth = pwidth[:]
             rwidth = pwidth[:]
             lwidth[dim] = split_index
@@ -179,16 +178,13 @@ def anonymize(partition):
                 partition.allow[dim] = 0
                 continue
             # anonymize sub-partition
-            anonymize(Partition(lhs,lwidth,lmiddle))
-            anonymize(Partition(rhs,rwidth,rmiddle))
+            anonymize(Partition(lhs, lwidth, lmiddle, pallow))
+            anonymize(Partition(rhs, rwidth, rmiddle, pallow))
             return
         else:
             # normal attributes
             if partition.middle[dim] != '*':
-                try:
-                    splitVal = gl_att_trees[dim][partition.middle[dim]]
-                except:
-                    pdb.set_trace()
+                splitVal = gl_att_trees[dim][partition.middle[dim]]
             else:
                 splitVal = gl_att_trees[dim]['*']
             sub_node = [t for t in splitVal.child]    
@@ -215,7 +211,7 @@ def anonymize(partition):
                     mtemp = pmiddle[:]
                     wtemp[dim] = sub_node[i].support
                     mtemp[dim] = sub_node[i].value
-                    anonymize(Partition(p, wtemp, mtemp))
+                    anonymize(Partition(p, wtemp, mtemp, pallow))
                 return
             else:
                 partition.allow[dim] = 0
