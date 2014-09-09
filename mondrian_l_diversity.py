@@ -134,13 +134,14 @@ def anonymize(partition):
     """recursively partition groups until not allowable
     """
     global gl_result
-    if sum(partition.allow) == 0 or len(partition.member) < 2*gl_L:
+    if len(partition.member) < 2*gl_L:
         gl_result.append(partition)
         return
+    allow_count = sum(partition.allow)
     pwidth = partition.width
     pmiddle = partition.middle
-    pallow = partition.allow
-    for i in range(gl_QI_len):
+    # pallow = partition.allow
+    for index in range(allow_count):
         dim = choose_dimension(partition)
         if dim == -1:
             print "Error: dim=-1"
@@ -178,8 +179,8 @@ def anonymize(partition):
                 partition.allow[dim] = 0
                 continue
             # anonymize sub-partition
-            anonymize(Partition(lhs, lwidth, lmiddle, pallow))
-            anonymize(Partition(rhs, rwidth, rmiddle, pallow))
+            anonymize(Partition(lhs, lwidth, lmiddle))
+            anonymize(Partition(rhs, rwidth, rmiddle))
             return
         else:
             # normal attributes
@@ -211,7 +212,7 @@ def anonymize(partition):
                     mtemp = pmiddle[:]
                     wtemp[dim] = sub_node[i].support
                     mtemp[dim] = sub_node[i].value
-                    anonymize(Partition(p, wtemp, mtemp, pallow))
+                    anonymize(Partition(p, wtemp, mtemp))
                 return
             else:
                 partition.allow[dim] = 0
