@@ -38,6 +38,16 @@ class Partition:
             self.allow = allow[:]
 
 
+def list_to_str(value_list, cmpfun=cmp, sep=';'):
+    """covert sorted str list (sorted by cmpfun) to str 
+    value (splited by sep). This fuction is value safe, which means 
+    value_list will not be changed.
+    """
+    temp = value_list[:]
+    temp.sort(cmp=cmpfun)
+    return sep.join(temp)
+
+
 def check_L_diversity(partition):
     """check if partition satisfy l-diversity
     """
@@ -47,7 +57,7 @@ def check_L_diversity(partition):
     else:
         ltemp = partition
     for temp in ltemp:
-        stemp = ';'.join(temp[-1])
+        stemp = list_to_str(temp[-1])
         try:
             sa_dict[stemp] += 1
         except:
