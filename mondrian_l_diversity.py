@@ -208,14 +208,16 @@ def anonymize(partition):
                     except:
                         continue
             flag = True
-            # remove empty sub_partitions
-            sub_partition = [p for p in sub_partition if len(p)]
             for p in sub_partition:
+                if len(p) == 0:
+                    continue
                 if check_L_diversity(p) == False:
                     flag = False
                     break
             if flag:
                 for i,p in enumerate(sub_partition):
+                    if len(p) == 0:
+                        continue
                     wtemp = pwidth[:]
                     mtemp = pmiddle[:]
                     wtemp[dim] = sub_node[i].support
