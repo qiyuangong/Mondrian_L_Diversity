@@ -94,6 +94,7 @@ def choose_dimension(partition):
             max_witdh = normWidth
             max_dim = i
     if max_witdh > 1:
+        print "Error: max_witdh > 1"
         pdb.set_trace()
     return max_dim
 
@@ -101,17 +102,12 @@ def choose_dimension(partition):
 def frequency_set(partition, dim):
     """get the frequency_set of partition on dim
     """
-    value_set = set()
     frequency = {}
     for record in partition.member:
         try:
-            if record[dim] in value_set:
-                frequency[record[dim]] += 1
-            else:
-                frequency[record[dim]] = 1
-                value_set.add(record[dim])
+            frequency[record[dim]] += 1
         except:
-            pdb.set_trace()
+            frequency[record[dim]] = 1
     return frequency
 
 
@@ -212,6 +208,8 @@ def anonymize(partition):
                     except:
                         continue
             flag = True
+            # remove empty sub_partitions
+            sub_partition = [p for p in sub_partition if len(p)]
             for p in sub_partition:
                 if check_L_diversity(p) == False:
                     flag = False
@@ -266,7 +264,8 @@ def mondrian_l_diversity(att_trees, data, L):
     ncp *= 100
     if __DEBUG:
         print "size of partitions"
-        print [len(t.member) for t in gl_result]
+        print len(gl_result)
+        # print [len(t.member) for t in gl_result]
         print "NCP = %.2f %%" % ncp
-        pdb.set_trace()
+        # pdb.set_trace()
     return result
