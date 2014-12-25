@@ -19,29 +19,27 @@ class Partition:
 
     """Class for Group, which is used to keep records 
     Store tree node in instances.
+    self.member: records in group
     self.width: width of this partition on each domain
     self.middle: save the generalization result of this partition
-    self.member: records in group
     self.allow: 0 donate that not allow to split, 1 donate can be split
     """
 
-    def __init__(self, data, width, middle, allow=None):
+    def __init__(self, data, width, middle):
         """
         initialize with data, width and middle
         """
         self.member = data[:]
         self.width = width[:]
         self.middle = middle[:]
-        if allow == None:
-            self.allow = [1] * gl_QI_len
-        else:
-            self.allow = allow[:]
+        self.allow = [1] * gl_QI_len
 
 
 def list_to_str(value_list, cmpfun=cmp, sep=';'):
     """covert sorted str list (sorted by cmpfun) to str 
     value (splited by sep). This fuction is value safe, which means 
     value_list will not be changed.
+    return str list.
     """
     temp = value_list[:]
     temp.sort(cmp=cmpfun)
@@ -50,6 +48,7 @@ def list_to_str(value_list, cmpfun=cmp, sep=';'):
 
 def check_L_diversity(partition):
     """check if partition satisfy l-diversity
+    return True if satisfy, False if not.
     """
     sa_dict = {}
     if isinstance(partition, Partition):
@@ -83,6 +82,7 @@ def getNormalizedWidth(partition, index):
 
 def choose_dimension(partition):
     """chooss dim with largest normlized Width
+    return dim index.
     """
     max_witdh = -1
     max_dim = -1
@@ -101,6 +101,7 @@ def choose_dimension(partition):
 
 def frequency_set(partition, dim):
     """get the frequency_set of partition on dim
+    return dict{key: str values, values: count}
     """
     frequency = {}
     for record in partition.member:
@@ -137,7 +138,9 @@ def find_median(frequency):
 
 
 def anonymize(partition):
-    """recursively partition groups until not allowable
+    """
+    Main procedure of mondrian_l_diversity.
+    recursively partition groups until not allowable.
     """
     global gl_result
     if len(partition.member) < 2*gl_L:
@@ -179,8 +182,8 @@ def anonymize(partition):
                     rhs.append(temp)
             lwidth = pwidth[:]
             rwidth = pwidth[:]
-            lwidth[dim] = split_index
-            rwidth[dim] = pwidth[dim] - split_index
+            lwidth[dim] = split_index + 1
+            rwidth[dim] = pwidth[dim] - split_index - 1
             if check_L_diversity(lhs) == False or  check_L_diversity(rhs) == False:
                 partition.allow[dim] = 0
                 continue
@@ -231,7 +234,11 @@ def anonymize(partition):
 
 
 def mondrian_l_diversity(att_trees, data, L):
-    """
+    """Mondrian for l-diversity.
+    This fuction support both numeric values and categoric values.
+    For numeric values, each iterator is a mean split.
+    For categoric values, each iterator is a split on GH.
+    The final result is stored in result.
     """
     print "L=%d" % L
     global gl_L, gl_result, gl_QI_len, gl_att_trees, gl_QI_range
