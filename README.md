@@ -9,6 +9,19 @@ Researches on data privacy have lasted for more than ten years, lots of great pa
 
 I decided to make some effort. Hoping these open source repositories can help researchers and developers on data privacy (privacy preserving data publishing).
 
+
+### Usage:
+My Implement is based on Python 2.7 (not Python 3.0). Please make sure your Python environment is collectly installed. You can run Mondrian in following steps: 
+1) Download (or clone) the whole project. 2) Run "anonymized.py" in root dir with CLI.
+
+
+	# run Mondrian with default l(l=10)
+	python anonymizer.py 
+	
+	# run Mondrian with l=20
+	python anonymized.py 20
+
+
 ## For more information:
 [1]  LeFevre, Kristen, David J. DeWitt, and Raghu Ramakrishnan. Mondrian multidimensional k-anonymity. Data Engineering, 2006. ICDE'06. Proceedings of the 22nd International Conference on. IEEE, 2006.
 
