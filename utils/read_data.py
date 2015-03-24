@@ -1,20 +1,22 @@
 #!/usr/bin/env python
-#coding=utf-8
+# coding=utf-8
 
 # Read data and read tree fuctions for INFORMS data
-# user att ['DUID','PID','DUPERSID','DOBMM','DOBYY','SEX','RACEX','RACEAX','RACEBX','RACEWX','RACETHNX','HISPANX','HISPCAT','EDUCYEAR','Year','marry','income','poverty']
-# condition att ['DUID','DUPERSID','ICD9CODX','year']
+# user att ['DUID', 'PID', 'DUPERSID', 'DOBMM', 'DOBYY', 'SEX', 'RACEX', 'RACEAX', 'RACEBX', 'RACEWX', 'RACETHNX', 'HISPANX', 'HISPCAT', 'EDUCYEAR', 'Year', 'marry', 'income', 'poverty']
+# condition att ['DUID', 'DUPERSID', 'ICD9CODX', 'year']
 from models.gentree import GenTree
 from models.numrange import NumRange
 import pickle
 
 
 __DEBUG = False
-gl_useratt = ['DUID','PID','DUPERSID','DOBMM','DOBYY','SEX','RACEX','RACEAX','RACEBX','RACEWX','RACETHNX','HISPANX','HISPCAT','EDUCYEAR','Year','marry','income','poverty']
-gl_conditionatt = ['DUID','DUPERSID','ICD9CODX','year']
+gl_useratt = ['DUID', 'PID', 'DUPERSID', 'DOBMM', 'DOBYY', 'SEX',
+              'RACEX', 'RACEAX', 'RACEBX', 'RACEWX', 'RACETHNX',
+              'HISPANX', 'HISPCAT', 'EDUCYEAR', 'Year', 'marry', 'income', 'poverty']
+gl_conditionatt = ['DUID', 'DUPERSID', 'ICD9CODX', 'year']
 # Only 5 relational attributes and 1 transaction attribute are selected (according to Poulis's paper)
-gl_attlist = [3,4,6,13,16]
-gl_if_cat = [True,True,True,True,False]
+gl_attlist = [3, 4, 6, 13, 16]
+gl_if_cat = [True, True, True, True, False]
 
 
 def cmp_str(element1, element2):
@@ -37,7 +39,7 @@ def read_tree():
             att_trees.append(pickle_static(gl_attlist[i]))
     return att_trees
 
-  
+
 def pickle_static(index):
     """pickle sorted values of BMS-WebView-2 to BMS_Static_value.pickle
     """
@@ -47,7 +49,7 @@ def pickle_static(index):
     try:
         static_file = open('data/income_Static_value.pickle', 'rb')
         print "Data exist..."
-        (support,sort_value) = pickle.load(static_file)
+        (support, sort_value) = pickle.load(static_file)
     except:
         need_static = True
         static_file = open('data/income_Static_value.pickle', 'wb')
@@ -64,10 +66,10 @@ def pickle_static(index):
                 support[row[index]] = 1
         sort_value = support.keys()
         sort_value.sort(cmp=cmp_str)
-        pickle.dump((support,sort_value), static_file)
+        pickle.dump((support, sort_value), static_file)
     static_file.close()
     userfile.close()
-    result = NumRange(sort_value,support)
+    result = NumRange(sort_value, support)
     return result
 
 
@@ -78,12 +80,12 @@ def read_tree_file(treename):
     att_tree = {}
     prefix = 'data/treefile_'
     postfix = ".txt"
-    treefile = open(prefix + treename + postfix,'rU')
+    treefile = open(prefix + treename + postfix, 'rU')
     att_tree['*'] = GenTree('*')
     if __DEBUG:
         print "Reading Tree" + treename
     for line in treefile:
-        #delete \n
+        # delete \n
         if len(line) <= 1:
             break
         line = line.strip()
@@ -92,15 +94,17 @@ def read_tree_file(treename):
         temp.reverse()
         for i, t in enumerate(temp):
             isleaf = False
-            if i == len(temp)-1: 
+            if i == len(temp) - 1:
                 isleaf = True
-            if not t in att_tree:
-                # always satisfy
+            # try and except is more efficient than 'in'
+            try:
+                att_tree[t]
+            except:
                 att_tree[t] = GenTree(t, att_tree[temp[i - 1]], isleaf)
     if __DEBUG:
         print "Nodes No. = %d" % att_tree['*'].support
     treefile.close()
-    return att_tree    
+    return att_tree
 
 
 def read_data(flag=0):
@@ -157,7 +161,3 @@ def read_data(flag=0):
     userfile.close()
     conditionfile.close()
     return data
-
-
-
-

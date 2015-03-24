@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#coding=utf-8
+# coding=utf-8
 
 
 import pdb
@@ -17,7 +17,7 @@ gl_QI_range = []
 
 class Partition:
 
-    """Class for Group, which is used to keep records 
+    """Class for Group, which is used to keep records
     Store tree node in instances.
     self.member: records in group
     self.width: width of this partition on each domain
@@ -36,8 +36,8 @@ class Partition:
 
 
 def list_to_str(value_list, cmpfun=cmp, sep=';'):
-    """covert sorted str list (sorted by cmpfun) to str 
-    value (splited by sep). This fuction is value safe, which means 
+    """covert sorted str list (sorted by cmpfun) to str
+    value (splited by sep). This fuction is value safe, which means
     value_list will not be changed.
     return str list.
     """
@@ -113,7 +113,7 @@ def frequency_set(partition, dim):
 
 
 def find_median(frequency):
-    """find the middle of the partition, 
+    """find the middle of the partition
     return splitVal
     """
     splitVal = ''
@@ -143,7 +143,7 @@ def anonymize(partition):
     recursively partition groups until not allowable.
     """
     global gl_result
-    if len(partition.member) < 2*gl_L:
+    if len(partition.member) < 2 * gl_L:
         gl_result.append(partition)
         return
     allow_count = sum(partition.allow)
@@ -184,7 +184,7 @@ def anonymize(partition):
             rwidth = pwidth[:]
             lwidth[dim] = split_index + 1
             rwidth[dim] = pwidth[dim] - split_index - 1
-            if check_L_diversity(lhs) == False or  check_L_diversity(rhs) == False:
+            if check_L_diversity(lhs) is False or check_L_diversity(rhs) is False:
                 partition.allow[dim] = 0
                 continue
             # anonymize sub-partition
@@ -197,12 +197,12 @@ def anonymize(partition):
                 splitVal = gl_att_trees[dim][partition.middle[dim]]
             else:
                 splitVal = gl_att_trees[dim]['*']
-            sub_node = [t for t in splitVal.child]    
-            sub_partition = []    
+            sub_node = [t for t in splitVal.child]
+            sub_partition = []
             for i in range(len(sub_node)):
                 sub_partition.append([])
             for temp in partition.member:
-                qid_value =  temp[dim]
+                qid_value = temp[dim]
                 for i, node in enumerate(sub_node):
                     try:
                         node.cover[qid_value]
@@ -214,11 +214,11 @@ def anonymize(partition):
             for p in sub_partition:
                 if len(p) == 0:
                     continue
-                if check_L_diversity(p) == False:
+                if check_L_diversity(p) is False:
                     flag = False
                     break
             if flag:
-                for i,p in enumerate(sub_partition):
+                for i, p in enumerate(sub_partition):
                     if len(p) == 0:
                         continue
                     wtemp = pwidth[:]
@@ -238,13 +238,13 @@ def mondrian_l_diversity(att_trees, data, L):
     This fuction support both numeric values and categoric values.
     For numeric values, each iterator is a mean split.
     For categoric values, each iterator is a split on GH.
-    The final result is stored in result.
+    The final result is returned in 2-dimensional list.
     """
     print "L=%d" % L
     global gl_L, gl_result, gl_QI_len, gl_att_trees, gl_QI_range
     gl_att_trees = att_trees
     middle = []
-    gl_QI_len = len(data[0])-1
+    gl_QI_len = len(data[0]) - 1
     gl_L = L
     gl_result = []
     result = []

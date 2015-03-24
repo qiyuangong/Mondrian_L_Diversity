@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#coding=utf-8
+# coding=utf-8
 from mondrian_l_diversity import mondrian_l_diversity
 from utils.read_data import read_data, read_tree
 import sys
@@ -13,9 +13,10 @@ if __name__ == '__main__':
     except:
         pass
     att_trees = read_tree()
-    #read record
+    # read record
     data = read_data()
     # remove duplicate items
     print "Begin Partition"
+    # anonymized dataset is stored in result
     result = mondrian_l_diversity(att_trees, data, L)
     print "Finish Partition!!"
