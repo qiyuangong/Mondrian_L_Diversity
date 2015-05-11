@@ -43,7 +43,7 @@ def read_tree():
 def pickle_static(index):
     """pickle sorted values of BMS-WebView-2 to BMS_Static_value.pickle
     """
-    userfile = open('data/demographics05test.csv', 'rU')
+    userfile = open('data/demographics.csv', 'rU')
     need_static = False
     support = {}
     try:
@@ -112,8 +112,8 @@ def read_data(flag=0):
     """
     """read microda for *.txt and return read data"""
     data = []
-    userfile = open('data/demographics05test.csv', 'rU')
-    conditionfile = open('data/conditions05.csv', 'rU')
+    userfile = open('data/demographics.csv', 'rU')
+    conditionfile = open('data/conditions.csv', 'rU')
     userdata = {}
     # We selet 3,4,5,6,13,15,15 att from demographics05, and 2 from condition05
     print "Reading Data..."
