@@ -15,6 +15,7 @@ gl_useratt = ['DUID', 'PID', 'DUPERSID', 'DOBMM', 'DOBYY', 'SEX',
               'HISPANX', 'HISPCAT', 'EDUCYEAR', 'Year', 'marry', 'income', 'poverty']
 gl_conditionatt = ['DUID', 'DUPERSID', 'ICD9CODX', 'year']
 # Only 5 relational attributes and 1 transaction attribute are selected (according to Poulis's paper)
+# DOBMM DOBYY RACEX, EDUCYEAR, income
 gl_attlist = [3, 4, 6, 13, 16]
 gl_if_cat = [True, True, True, True, False]
 
@@ -47,12 +48,12 @@ def pickle_static(index):
     need_static = False
     support = {}
     try:
-        static_file = open('data/income_Static_value.pickle', 'rb')
+        static_file = open('data/' + gl_useratt[index] + '_Static_value.pickle', 'rb')
         print "Data exist..."
         (support, sort_value) = pickle.load(static_file)
     except:
         need_static = True
-        static_file = open('data/income_Static_value.pickle', 'wb')
+        static_file = open('data/' + gl_useratt[index] + '_Static_value.pickle', 'wb')
         print "Pickle Data..."
         for i, line in enumerate(userfile):
             line = line.strip()
@@ -78,7 +79,7 @@ def read_tree_file(treename):
     """
     leaf_to_path = {}
     att_tree = {}
-    prefix = 'data/treefile_'
+    prefix = 'data/informs_'
     postfix = ".txt"
     treefile = open(prefix + treename + postfix, 'rU')
     att_tree['*'] = GenTree('*')
