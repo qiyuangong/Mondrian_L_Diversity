@@ -1,6 +1,28 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+# @InProceedings{LeFevre2006a,
+#   Title                    = {Workload-aware Anonymization},
+#   Author                   = {LeFevre, Kristen and DeWitt, David J. and Ramakrishnan, Raghu},
+#   Booktitle                = {Proceedings of the 12th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining},
+#   Year                     = {2006},
+
+#   Address                  = {New York, NY, USA},
+#   Pages                    = {277--286},
+#   Publisher                = {ACM},
+#   Series                   = {KDD '06},
+
+#   Acmid                    = {1150435},
+#   Doi                      = {10.1145/1150402.1150435},
+#   File                     = {Workload-aware Anonymization.pdf:All paper\\Workload-aware Anonymization.pdf:PDF},
+#   ISBN                     = {1-59593-339-5},
+#   Keywords                 = {anonymity, data recoding, predictive modeling, privacy},
+#   Location                 = {Philadelphia, PA, USA},
+#   Numpages                 = {10},
+#   Url                      = {http://doi.acm.org/10.1145/1150402.1150435}
+# }
+
+# 2014-10-12
 
 import pdb
 from models.numrange import NumRange
