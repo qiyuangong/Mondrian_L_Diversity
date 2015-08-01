@@ -232,6 +232,8 @@ def anonymize(partition):
                         break
                     except:
                         continue
+                else:
+                    print "Generalization hierarchy error!"
             flag = True
             for p in sub_partition:
                 if len(p) == 0:
@@ -255,22 +257,30 @@ def anonymize(partition):
     gl_result.append(partition)
 
 
+def init(att_trees, data, L):
+    """
+    resset global variables
+    """
+    global gl_L, gl_result, gl_QI_len, gl_att_trees, gl_QI_range
+    gl_att_trees = att_trees
+    gl_QI_len = len(data[0]) - 1
+    gl_L = L
+    gl_result = []
+    gl_QI_range = []
+
+
 def mondrian_l_diversity(att_trees, data, L):
-    """Mondrian for l-diversity.
+    """
+    Mondrian for l-diversity.
     This fuction support both numeric values and categoric values.
     For numeric values, each iterator is a mean split.
     For categoric values, each iterator is a split on GH.
     The final result is returned in 2-dimensional list.
     """
     print "L=%d" % L
-    global gl_L, gl_result, gl_QI_len, gl_att_trees, gl_QI_range
-    gl_att_trees = att_trees
+    init(att_trees, data, L)
     middle = []
-    gl_QI_len = len(data[0]) - 1
-    gl_L = L
-    gl_result = []
     result = []
-    gl_QI_range = []
     for i in range(gl_QI_len):
         if isinstance(gl_att_trees[i], NumRange):
             gl_QI_range.append(gl_att_trees[i].range)
