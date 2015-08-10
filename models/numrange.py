@@ -2,6 +2,8 @@
 # coding=utf-8
 
 # Range for numeric type
+
+
 class NumRange(object):
 
     """Class for Generalization hierarchies (Taxonomy Tree).
@@ -16,7 +18,7 @@ class NumRange(object):
     def __init__(self, sort_value, support):
         self.sort_value = sort_value[:]
         self.support = support.copy()
-        self.range = len(sort_value)
+        self.range = float(sort_value[-1]) - float(sort_value[0])
         self.dict = {}
         for i, v in enumerate(sort_value):
             self.dict[v] = i

@@ -30,11 +30,12 @@ from models.gentree import GenTree
 
 
 __DEBUG = True
-gl_QI_len = 10
-gl_L = 0
-gl_result = []
-gl_att_trees = []
-gl_QI_range = []
+QI_LEN = 10
+GL_L = 0
+RESULT = []
+ATT_TREES = []
+QI_RANGE = []
+IS_CAT = []
 
 
 class Partition:
@@ -54,7 +55,7 @@ class Partition:
         self.member = data[:]
         self.width = width[:]
         self.middle = middle[:]
-        self.allow = [1] * gl_QI_len
+        self.allow = [1] * QI_LEN
 
 
 def list_to_str(value_list, cmpfun=cmp, sep=';'):
@@ -77,15 +78,21 @@ def check_L_diversity(partition):
         ltemp = partition.member
     else:
         ltemp = partition
+    ls = len(ltemp)
     for temp in ltemp:
         stemp = list_to_str(temp[-1])
         try:
             sa_dict[stemp] += 1
         except:
             sa_dict[stemp] = 1
-            if len(sa_dict) >= gl_L:
-                return True
-    return False
+    if len(sa_dict) < GL_L:
+        return False
+    for sa in sa_dict.keys():
+        # if any SA value appear more than |T|/l,
+        # the partition does not satisfy l-diversity
+        if sa_dict[sa] > 1.0 * ls / GL_L:
+            return False
+    return True
 
 
 def cmp_str(element1, element2):
@@ -98,8 +105,13 @@ def getNormalizedWidth(partition, index):
     """return Normalized width of partition
     similar to NCP
     """
-    width = partition.width[index]
-    return width * 1.0 / gl_QI_range[index]
+    if IS_CAT[index] is False:
+        low = partition.width[index][0]
+        high = partition.width[index][1]
+        width = float(ATT_TREES[index].sort_value[high]) - float(ATT_TREES[index].sort_value[low])
+    else:
+        width = partition.width[index]
+    return width * 1.0 / QI_RANGE[index]
 
 
 def choose_dimension(partition):
@@ -108,7 +120,7 @@ def choose_dimension(partition):
     """
     max_witdh = -1
     max_dim = -1
-    for i in range(gl_QI_len):
+    for i in range(QI_LEN):
         if partition.allow[i] == 0:
             continue
         normWidth = getNormalizedWidth(partition, i)
@@ -117,6 +129,9 @@ def choose_dimension(partition):
             max_dim = i
     if max_witdh > 1:
         print "Error: max_witdh > 1"
+        pdb.set_trace()
+    if max_dim == -1:
+        print "cannot find the max dim"
         pdb.set_trace()
     return max_dim
 
@@ -143,7 +158,7 @@ def find_median(frequency):
     value_list.sort(cmp=cmp_str)
     total = sum(frequency.values())
     middle = total / 2
-    if middle < gl_L:
+    if middle < GL_L:
         print "Error: size of group less than 2*K"
         return ''
     index = 0
@@ -164,9 +179,9 @@ def anonymize(partition):
     Main procedure of mondrian_l_diversity.
     recursively partition groups until not allowable.
     """
-    global gl_result
-    if len(partition.member) < 2 * gl_L:
-        gl_result.append(partition)
+    global RESULT
+    if len(partition.member) < 2 * GL_L:
+        RESULT.append(partition)
         return
     allow_count = sum(partition.allow)
     pwidth = partition.width
@@ -177,14 +192,14 @@ def anonymize(partition):
         if dim == -1:
             print "Error: dim=-1"
             pdb.set_trace()
-        if isinstance(gl_att_trees[dim], NumRange):
+        if IS_CAT[dim] is False:
             # numeric attributes
             frequency = frequency_set(partition, dim)
             (splitVal, split_index) = find_median(frequency)
             if splitVal == '':
                 print "Error: splitVal= null"
                 pdb.set_trace()
-            middle_pos = gl_att_trees[dim].dict[splitVal]
+            middle_pos = ATT_TREES[dim].dict[splitVal]
             lmiddle = pmiddle[:]
             rmiddle = pmiddle[:]
             temp = pmiddle[dim].split(',')
@@ -195,7 +210,7 @@ def anonymize(partition):
             lhs = []
             rhs = []
             for temp in partition.member:
-                pos = gl_att_trees[dim].dict[temp[dim]]
+                pos = ATT_TREES[dim].dict[temp[dim]]
                 if pos <= middle_pos:
                     # lhs = [low, means]
                     lhs.append(temp)
@@ -204,8 +219,8 @@ def anonymize(partition):
                     rhs.append(temp)
             lwidth = pwidth[:]
             rwidth = pwidth[:]
-            lwidth[dim] = split_index + 1
-            rwidth[dim] = pwidth[dim] - split_index - 1
+            lwidth[dim] = (pwidth[dim][0], split_index)
+            rwidth[dim] = (split_index + 1, pwidth[dim][1])
             if check_L_diversity(lhs) is False or check_L_diversity(rhs) is False:
                 partition.allow[dim] = 0
                 continue
@@ -216,9 +231,12 @@ def anonymize(partition):
         else:
             # normal attributes
             if partition.middle[dim] != '*':
-                splitVal = gl_att_trees[dim][partition.middle[dim]]
+                splitVal = ATT_TREES[dim][partition.middle[dim]]
             else:
-                splitVal = gl_att_trees[dim]['*']
+                splitVal = ATT_TREES[dim]['*']
+            if len(splitVal.child) == 0:
+                partition.allow[dim] = 0
+                continue
             sub_node = [t for t in splitVal.child]
             sub_partition = []
             for i in range(len(sub_node)):
@@ -230,10 +248,11 @@ def anonymize(partition):
                         node.cover[qid_value]
                         sub_partition[i].append(temp)
                         break
-                    except:
+                    except KeyError:
                         continue
                 else:
                     print "Generalization hierarchy error!"
+                    pdb.set_trace()
             flag = True
             for p in sub_partition:
                 if len(p) == 0:
@@ -254,19 +273,24 @@ def anonymize(partition):
             else:
                 partition.allow[dim] = 0
                 continue
-    gl_result.append(partition)
+    RESULT.append(partition)
 
 
 def init(att_trees, data, L):
     """
     resset global variables
     """
-    global gl_L, gl_result, gl_QI_len, gl_att_trees, gl_QI_range
-    gl_att_trees = att_trees
-    gl_QI_len = len(data[0]) - 1
-    gl_L = L
-    gl_result = []
-    gl_QI_range = []
+    global GL_L, RESULT, QI_LEN, ATT_TREES, QI_RANGE, IS_CAT
+    ATT_TREES = att_trees
+    for t in att_trees:
+        if isinstance(t, NumRange):
+            IS_CAT.append(False)
+        else:
+            IS_CAT.append(True)
+    QI_LEN = len(data[0]) - 1
+    GL_L = L
+    RESULT = []
+    QI_RANGE = []
 
 
 def mondrian_l_diversity(att_trees, data, L):
@@ -281,32 +305,35 @@ def mondrian_l_diversity(att_trees, data, L):
     init(att_trees, data, L)
     middle = []
     result = []
-    for i in range(gl_QI_len):
-        if isinstance(gl_att_trees[i], NumRange):
-            gl_QI_range.append(gl_att_trees[i].range)
-            middle.append(gl_att_trees[i].value)
+    wtemp = []
+    for i in range(QI_LEN):
+        if IS_CAT[i] is False:
+            QI_RANGE.append(ATT_TREES[i].range)
+            wtemp.append((0, len(ATT_TREES[i].sort_value) - 1))
+            middle.append(ATT_TREES[i].value)
         else:
-            gl_QI_range.append(gl_att_trees[i]['*'].support)
-            middle.append(gl_att_trees[i]['*'].value)
-    partition = Partition(data, gl_QI_range[:], middle)
-    anonymize(partition)
+            QI_RANGE.append(ATT_TREES[i]['*'].support)
+            wtemp.append(ATT_TREES[i]['*'].support)
+            middle.append(ATT_TREES[i]['*'].value)
+    whole_partition = Partition(data, wtemp, middle)
+    anonymize(whole_partition)
     ncp = 0.0
-    for p in gl_result:
+    for p in RESULT:
         rncp = 0.0
-        for i in range(gl_QI_len):
+        for i in range(QI_LEN):
             rncp += getNormalizedWidth(p, i)
         temp = p.middle
         for i in range(len(p.member)):
             result.append(temp[:])
         rncp *= len(p.member)
         ncp += rncp
-    ncp /= gl_QI_len
+    ncp /= QI_LEN
     ncp /= len(data)
     ncp *= 100
     if __DEBUG:
         print "size of partitions"
-        print len(gl_result)
-        # print [len(t.member) for t in gl_result]
+        print len(RESULT)
+        # print [len(t.member) for t in RESULT]
         print "NCP = %.2f %%" % ncp
         # pdb.set_trace()
     return result
