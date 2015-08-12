@@ -1,4 +1,8 @@
-#!/usr/bin/env python
+"""
+run mondrian_l_diversity with given parameters
+"""
+
+# !/usr/bin/env python
 # coding=utf-8
 from mondrian_l_diversity import mondrian_l_diversity
 from utils.read_data import read_data, read_tree
@@ -7,16 +11,16 @@ import pdb
 # Poulis set k=25, m=2 as default!
 
 if __name__ == '__main__':
-    L = 10
+    GL_L = 10
     try:
-        L = int(sys.argv[1])
+        GL_L = int(sys.argv[1])
     except:
         pass
-    att_trees = read_tree()
+    ATT_TREES = read_tree()
     # read record
-    data = read_data()
+    DATA = read_data()
     # remove duplicate items
     print "Begin Partition"
-    # anonymized dataset is stored in result
-    result = mondrian_l_diversity(att_trees, data, L)
+    # anonymized dataset is stored in RESULT
+    RESULT = mondrian_l_diversity(ATT_TREES, DATA, GL_L)
     print "Finish Partition!!"

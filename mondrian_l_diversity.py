@@ -2,24 +2,21 @@
 # coding=utf-8
 
 # @InProceedings{LeFevre2006a,
-#   Title                    = {Workload-aware Anonymization},
-#   Author                   = {LeFevre, Kristen and DeWitt, David J. and Ramakrishnan, Raghu},
-#   Booktitle                = {Proceedings of the 12th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining},
-#   Year                     = {2006},
-
-#   Address                  = {New York, NY, USA},
-#   Pages                    = {277--286},
-#   Publisher                = {ACM},
-#   Series                   = {KDD '06},
-
-#   Acmid                    = {1150435},
-#   Doi                      = {10.1145/1150402.1150435},
-#   File                     = {Workload-aware Anonymization.pdf:All paper\\Workload-aware Anonymization.pdf:PDF},
-#   ISBN                     = {1-59593-339-5},
-#   Keywords                 = {anonymity, data recoding, predictive modeling, privacy},
-#   Location                 = {Philadelphia, PA, USA},
-#   Numpages                 = {10},
-#   Url                      = {http://doi.acm.org/10.1145/1150402.1150435}
+#   Title = {Workload-aware Anonymization},
+#   Author = {LeFevre, Kristen and DeWitt, David J. and Ramakrishnan, Raghu},
+#   Booktitle = {Proceedings of the 12th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining},
+#   Year = {2006},
+#   Address = {New York, NY, USA},
+#   Pages = {277--286},
+#   Publisher = {ACM},
+#   Series = {KDD '06},
+#   Acmid = {1150435},
+#   Doi = {10.1145/1150402.1150435},
+#   ISBN = {1-59593-339-5},
+#   Keywords = {anonymity, data recoding, predictive modeling, privacy},
+#   Location = {Philadelphia, PA, USA},
+#   Numpages = {10},
+#   Url  = {http://doi.acm.org/10.1145/1150402.1150435}
 # }
 
 # 2014-10-12
@@ -27,6 +24,7 @@
 import pdb
 from models.numrange import NumRange
 from models.gentree import GenTree
+from utils.utility import list_to_str, cmp_str
 
 
 __DEBUG = True
@@ -45,7 +43,6 @@ class Partition:
     self.member: records in group
     self.width: width of this partition on each domain
     self.middle: save the generalization result of this partition
-    self.allow: 0 donate that not allow to split, 1 donate can be split
     """
 
     def __init__(self, data, width, middle):
@@ -55,18 +52,12 @@ class Partition:
         self.member = data[:]
         self.width = width[:]
         self.middle = middle[:]
-        self.allow = [1] * QI_LEN
 
-
-def list_to_str(value_list, cmpfun=cmp, sep=';'):
-    """covert sorted str list (sorted by cmpfun) to str
-    value (splited by sep). This fuction is value safe, which means
-    value_list will not be changed.
-    return str list.
-    """
-    temp = value_list[:]
-    temp.sort(cmp=cmpfun)
-    return sep.join(temp)
+    def __len__(self):
+        """
+        return the number of records in partition
+        """
+        return len(partition.member)
 
 
 def check_L_diversity(partition):
@@ -75,17 +66,17 @@ def check_L_diversity(partition):
     """
     sa_dict = {}
     if isinstance(partition, Partition):
-        ltemp = partition.member
+        records_set = partition.member
     else:
-        ltemp = partition
-    ls = len(ltemp)
-    for temp in ltemp:
-        stemp = list_to_str(temp[-1])
+        records_set = partition
+    ls = len(records_set)
+    for record in records_set:
+        sa_value = list_to_str(record[-1])
         try:
-            sa_dict[stemp] += 1
+            sa_dict[sa_value] += 1
         except:
-            sa_dict[stemp] = 1
-    if len(sa_dict) < GL_L:
+            sa_dict[sa_value] = 1
+    if len(sa_dict.keys()) < GL_L:
         return False
     for sa in sa_dict.keys():
         # if any SA value appear more than |T|/l,
@@ -93,12 +84,6 @@ def check_L_diversity(partition):
         if sa_dict[sa] > 1.0 * ls / GL_L:
             return False
     return True
-
-
-def cmp_str(element1, element2):
-    """compare number in str format correctley
-    """
-    return cmp(int(element1), int(element2))
 
 
 def getNormalizedWidth(partition, index):
@@ -121,8 +106,6 @@ def choose_dimension(partition):
     max_witdh = -1
     max_dim = -1
     for i in range(QI_LEN):
-        if partition.allow[i] == 0:
-            continue
         normWidth = getNormalizedWidth(partition, i)
         if normWidth > max_witdh:
             max_witdh = normWidth
@@ -144,7 +127,7 @@ def frequency_set(partition, dim):
     for record in partition.member:
         try:
             frequency[record[dim]] += 1
-        except:
+        except KeyError:
             frequency[record[dim]] = 1
     return frequency
 
@@ -154,6 +137,7 @@ def find_median(frequency):
     return splitVal
     """
     splitVal = ''
+    nextVal = ''
     value_list = frequency.keys()
     value_list.sort(cmp=cmp_str)
     total = sum(frequency.values())
@@ -171,7 +155,34 @@ def find_median(frequency):
             break
     else:
         print "Error: cannot find splitVal"
-    return (splitVal, split_index)
+    try:
+        nextVal = value_list[split_index + 1]
+    except IndexError:
+        nextVal = splitVal
+    return (splitVal, nextVal)
+
+
+def split_numeric_value(numeric_value, splitVal):
+    """
+    split numeric value on splitVal
+    return sub ranges
+    """
+    split_result = numeric_value.split(',')
+    if len(split_result) <= 1:
+        return split_result[0], split_result[0]
+    else:
+        low = split_result[0]
+        high = split_result[1]
+        # Fix 2,2 problem
+        if low == splitVal:
+            lvalue = low
+        else:
+            lvalue = low + ',' + splitVal
+        if high == splitVal:
+            rvalue = high
+        else:
+            rvalue = splitVal + ',' + high
+        return lvalue, rvalue
 
 
 def anonymize(partition):
@@ -179,101 +190,91 @@ def anonymize(partition):
     Main procedure of mondrian_l_diversity.
     recursively partition groups until not allowable.
     """
-    global RESULT
-    if len(partition.member) < 2 * GL_L:
+    if check_L_diversity(partition) is False:
         RESULT.append(partition)
         return
-    allow_count = sum(partition.allow)
     pwidth = partition.width
     pmiddle = partition.middle
-    # pallow = partition.allow
-    for index in range(allow_count):
-        dim = choose_dimension(partition)
-        if dim == -1:
-            print "Error: dim=-1"
+    dim = choose_dimension(partition)
+    if dim == -1:
+        print "Error: dim=-1"
+        pdb.set_trace()
+    if IS_CAT[dim] is False:
+        # numeric attributes
+        frequency = frequency_set(partition, dim)
+        (splitVal, nextVal) = find_median(frequency)
+        if splitVal == '':
+            print "Error: splitVal= null"
             pdb.set_trace()
-        if IS_CAT[dim] is False:
-            # numeric attributes
-            frequency = frequency_set(partition, dim)
-            (splitVal, split_index) = find_median(frequency)
-            if splitVal == '':
-                print "Error: splitVal= null"
-                pdb.set_trace()
-            middle_pos = ATT_TREES[dim].dict[splitVal]
-            lmiddle = pmiddle[:]
-            rmiddle = pmiddle[:]
-            temp = pmiddle[dim].split(',')
-            low = temp[0]
-            high = temp[1]
-            lmiddle[dim] = low + ',' + splitVal
-            rmiddle[dim] = splitVal + ',' + high
-            lhs = []
-            rhs = []
-            for temp in partition.member:
-                pos = ATT_TREES[dim].dict[temp[dim]]
-                if pos <= middle_pos:
-                    # lhs = [low, means]
-                    lhs.append(temp)
-                else:
-                    # rhs = (means, high]
-                    rhs.append(temp)
-            lwidth = pwidth[:]
-            rwidth = pwidth[:]
-            lwidth[dim] = (pwidth[dim][0], split_index)
-            rwidth[dim] = (split_index + 1, pwidth[dim][1])
-            if check_L_diversity(lhs) is False or check_L_diversity(rhs) is False:
-                partition.allow[dim] = 0
-                continue
-            # anonymize sub-partition
-            anonymize(Partition(lhs, lwidth, lmiddle))
-            anonymize(Partition(rhs, rwidth, rmiddle))
-            return
+        middle_pos = ATT_TREES[dim].dict[splitVal]
+        lmiddle = pmiddle[:]
+        rmiddle = pmiddle[:]
+        temp = pmiddle[dim].split(',')
+        lmiddle[dim], rmiddle[dim] = split_numeric_value(pmiddle[dim], splitVal)
+        left_width = pwidth[:]
+        right_width = pwidth[:]
+        left_width[dim] = (pwidth[dim][0], middle_pos)
+        right_width[dim] = (ATT_TREES[dim].dict[nextVal], pwidth[dim][1])
+        lhs = []
+        rhs = []
+        mid_set = []
+        for record in partition.member:
+            pos = ATT_TREES[dim].dict[record[dim]]
+            if pos < middle_pos:
+                # lhs = [low, means]
+                lhs.append(record)
+            elif pos > middle_pos:
+                # rhs = (means, high]
+                rhs.append(record)
+            else:
+                mid_set.append(recod)
+        half_size = len(partition) / 2
+        for i in range(half_size):
+            record = mid_set.pop()
+            lhs.append(record)
+        # anonymize sub-partition
+        anonymize(Partition(lhs, left_width, lmiddle))
+        anonymize(Partition(rhs, right_width, rmiddle))
+    else:
+        # normal attributes
+        if partition.middle[dim] != '*':
+            splitVal = ATT_TREES[dim][partition.middle[dim]]
         else:
-            # normal attributes
-            if partition.middle[dim] != '*':
-                splitVal = ATT_TREES[dim][partition.middle[dim]]
-            else:
-                splitVal = ATT_TREES[dim]['*']
-            if len(splitVal.child) == 0:
-                partition.allow[dim] = 0
-                continue
-            sub_node = [t for t in splitVal.child]
-            sub_partition = []
-            for i in range(len(sub_node)):
-                sub_partition.append([])
-            for temp in partition.member:
-                qid_value = temp[dim]
-                for i, node in enumerate(sub_node):
-                    try:
-                        node.cover[qid_value]
-                        sub_partition[i].append(temp)
-                        break
-                    except KeyError:
-                        continue
-                else:
-                    print "Generalization hierarchy error!"
-                    pdb.set_trace()
-            flag = True
-            for p in sub_partition:
-                if len(p) == 0:
-                    continue
-                if check_L_diversity(p) is False:
-                    flag = False
+            splitVal = ATT_TREES[dim]['*']
+        if len(splitVal.child) == 0:
+            pdb.set_trace()
+        sub_node = [t for t in splitVal.child]
+        sub_partitions = []
+        for i in range(len(sub_node)):
+            sub_partitions.append([])
+        for record in partition.member:
+            qid_value = record[dim]
+            for i, node in enumerate(sub_node):
+                try:
+                    node.cover[qid_value]
+                    sub_partitions[i].append(record)
                     break
-            if flag:
-                for i, p in enumerate(sub_partition):
-                    if len(p) == 0:
-                        continue
-                    wtemp = pwidth[:]
-                    mtemp = pmiddle[:]
-                    wtemp[dim] = sub_node[i].support
-                    mtemp[dim] = sub_node[i].value
-                    anonymize(Partition(p, wtemp, mtemp))
-                return
+                except KeyError:
+                    continue
             else:
-                partition.allow[dim] = 0
+                print "Generalization hierarchy error!"
+                pdb.set_trace()
+        flag = True
+        for sub_partition in sub_partitions:
+            if len(sub_partition) == 0:
                 continue
-    RESULT.append(partition)
+            if check_L_diversity(sub_partition) is False:
+                flag = False
+                break
+        if flag:
+            for i, sub_partition in enumerate(sub_partitions):
+                if len(sub_partition) == 0:
+                    pdb.set_trace()
+                wtemp = pwidth[:]
+                mtemp = pmiddle[:]
+                wtemp[dim] = sub_node[i].support
+                mtemp[dim] = sub_node[i].value
+                anonymize(Partition(sub_partition, wtemp, mtemp))
 
 
 def init(att_trees, data, L):
@@ -282,8 +283,8 @@ def init(att_trees, data, L):
     """
     global GL_L, RESULT, QI_LEN, ATT_TREES, QI_RANGE, IS_CAT
     ATT_TREES = att_trees
-    for t in att_trees:
-        if isinstance(t, NumRange):
+    for gen_tree in att_trees:
+        if isinstance(gen_tree, NumRange):
             IS_CAT.append(False)
         else:
             IS_CAT.append(True)
@@ -318,14 +319,14 @@ def mondrian_l_diversity(att_trees, data, L):
     whole_partition = Partition(data, wtemp, middle)
     anonymize(whole_partition)
     ncp = 0.0
-    for p in RESULT:
+    for partition in RESULT:
         rncp = 0.0
         for i in range(QI_LEN):
-            rncp += getNormalizedWidth(p, i)
-        temp = p.middle
-        for i in range(len(p.member)):
-            result.append(temp[:])
-        rncp *= len(p.member)
+            rncp += getNormalizedWidth(partition, i)
+        gen_result = partition.middle
+        for i in range(len(partition)):
+            result.append(gen_result[:])
+        rncp *= len(partition)
         ncp += rncp
     ncp /= QI_LEN
     ncp /= len(data)
@@ -333,7 +334,6 @@ def mondrian_l_diversity(att_trees, data, L):
     if __DEBUG:
         print "size of partitions"
         print len(RESULT)
-        # print [len(t.member) for t in RESULT]
+        # print [len(t) for t in RESULT]
         print "NCP = %.2f %%" % ncp
-        # pdb.set_trace()
     return result
