@@ -1,3 +1,6 @@
+"""
+generalization hierarchy for catgorical attribute
+"""
 #!/usr/bin/env python
 # coding=utf-8
 
@@ -45,3 +48,9 @@ class GenTree(object):
             return self.cover[value]
         except:
             return None
+
+    def __len__(self):
+        """
+        return number of leaf nodes in covered by this node
+        """
+        return self.support

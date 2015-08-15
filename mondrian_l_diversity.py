@@ -1,3 +1,6 @@
+"""
+main module of mondrian_l_diversity
+"""
 #!/usr/bin/env python
 # coding=utf-8
 
@@ -137,10 +140,11 @@ def frequency_set(partition, dim):
     return frequency
 
 
-def find_median(frequency):
+def find_median(partition, dim):
     """find the middle of the partition
     return splitVal
     """
+    frequency = frequency_set(partition, dim)
     splitVal = ''
     nextVal = ''
     value_list = frequency.keys()
@@ -208,20 +212,18 @@ def anonymize(partition):
             pdb.set_trace()
         if IS_CAT[dim] is False:
             # numeric attributes
-            frequency = frequency_set(partition, dim)
-            (splitVal, nextVal) = find_median(frequency)
+            (splitVal, nextVal) = find_median(partition, dim)
             if splitVal == '':
                 print "Error: splitVal= null"
                 pdb.set_trace()
             middle_pos = ATT_TREES[dim].dict[splitVal]
-            lmiddle = pmiddle[:]
-            rmiddle = pmiddle[:]
-            temp = pmiddle[dim].split(',')
-            lmiddle[dim], rmiddle[dim] = split_numeric_value(pmiddle[dim], splitVal)
-            left_width = pwidth[:]
-            right_width = pwidth[:]
-            left_width[dim] = (pwidth[dim][0], middle_pos)
-            right_width[dim] = (ATT_TREES[dim].dict[nextVal], pwidth[dim][1])
+            lhs_middle = pmiddle[:]
+            rhs_middle = pmiddle[:]
+            lhs_middle[dim], rhs_middle[dim] = split_numeric_value(pmiddle[dim], splitVal)
+            lhs_width = pwidth[:]
+            rhs_width = pwidth[:]
+            lhs_width[dim] = (pwidth[dim][0], middle_pos)
+            rhs_width[dim] = (ATT_TREES[dim].dict[nextVal], pwidth[dim][1])
             lhs = []
             rhs = []
             for record in partition.member:
@@ -236,19 +238,16 @@ def anonymize(partition):
                 partition.allow[dim] = 0
                 continue
             # anonymize sub-partition
-            anonymize(Partition(lhs, left_width, lmiddle))
-            anonymize(Partition(rhs, right_width, rmiddle))
+            anonymize(Partition(lhs, lhs_width, lhs_middle))
+            anonymize(Partition(rhs, rhs_width, rhs_middle))
             return
         else:
             # normal attributes
-            if partition.middle[dim] != '*':
-                splitVal = ATT_TREES[dim][partition.middle[dim]]
-            else:
-                splitVal = ATT_TREES[dim]['*']
-            if len(splitVal.child) == 0:
+            split_node = ATT_TREES[dim][partition.middle[dim]]
+            if len(split_node.child) == 0:
                 partition.allow[dim] = 0
                 continue
-            sub_node = [t for t in splitVal.child]
+            sub_node = [t for t in split_node.child]
             sub_partitions = []
             for i in range(len(sub_node)):
                 sub_partitions.append([])
@@ -329,8 +328,10 @@ def mondrian_l_diversity(att_trees, data, L):
     whole_partition = Partition(data, wtemp, middle)
     anonymize(whole_partition)
     ncp = 0.0
+    dp = 0.0
     for partition in RESULT:
         rncp = 0.0
+        dp += len(partition) ** 2
         for i in range(QI_LEN):
             rncp += get_normalized_width(partition, i)
         gen_result = partition.middle
@@ -342,6 +343,8 @@ def mondrian_l_diversity(att_trees, data, L):
     ncp /= len(data)
     ncp *= 100
     if __DEBUG:
+        from decimal import Decimal
+        print "Discernability Penalty=%.2E" % Decimal(str(dp))
         print "size of partitions"
         print len(RESULT)
         # print [len(t) for t in RESULT]

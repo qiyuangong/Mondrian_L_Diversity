@@ -1,3 +1,6 @@
+"""
+class for numeric attribute
+"""
 #!/usr/bin/env python
 # coding=utf-8
 
@@ -23,3 +26,9 @@ class NumRange(object):
         for i, v in enumerate(sort_value):
             self.dict[v] = i
         self.value = sort_value[0] + ',' + sort_value[-1]
+
+    def __len__(self):
+        """
+        return |max-min|
+        """
+        return self.range
