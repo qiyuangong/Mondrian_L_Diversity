@@ -39,7 +39,7 @@ QI_RANGE = []
 IS_CAT = []
 
 
-class Partition:
+class Partition(object):
 
     """Class for Group, which is used to keep records
     Store tree node in instances.
@@ -63,6 +63,21 @@ class Partition:
         return the number of records in partition
         """
         return len(self.member)
+
+
+def check_diversity(data):
+    """
+    check the distinct SA values in dataset
+    """
+    sa_dict = {}
+    num_record = len(data)
+    for record in data:
+        sa_value = list_to_str(record[-1])
+        try:
+            sa_dict[sa_value] += 1
+        except KeyError:
+            sa_dict[sa_value] = 1
+    return len(sa_dict.keys())
 
 
 def check_L_diversity(partition):
@@ -345,6 +360,7 @@ def mondrian_l_diversity(att_trees, data, L):
     if __DEBUG:
         from decimal import Decimal
         print "Discernability Penalty=%.2E" % Decimal(str(dp))
+        print "Diversity", check_diversity(data)
         print "size of partitions"
         print len(RESULT)
         # print [len(t) for t in RESULT]
