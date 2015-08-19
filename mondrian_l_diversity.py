@@ -25,14 +25,15 @@ main module of mondrian_l_diversity
 # 2014-10-12
 
 import pdb
+import time
 from models.numrange import NumRange
 from models.gentree import GenTree
 from utils.utility import list_to_str, cmp_str
 
 
-__DEBUG = True
+__DEBUG = False
 QI_LEN = 10
-GL_L = 0
+GL_L = 5
 RESULT = []
 ATT_TREES = []
 QI_RANGE = []
@@ -58,6 +59,12 @@ class Partition(object):
         self.middle = list(middle)
         self.allow = [1] * QI_LEN
 
+    def add_record(self, record):
+        """
+        add record to partition
+        """
+        self.member.append(record)
+
     def __len__(self):
         """
         return the number of records in partition
@@ -70,9 +77,11 @@ def check_diversity(data):
     check the distinct SA values in dataset
     """
     sa_dict = {}
-    num_record = len(data)
     for record in data:
-        sa_value = list_to_str(record[-1])
+        try:
+            sa_value = list_to_str(record[-1])
+        except AttributeError:
+            sa_value = record[-1]
         try:
             sa_dict[sa_value] += 1
         except KeyError:
@@ -91,17 +100,20 @@ def check_L_diversity(partition):
         records_set = partition
     num_record = len(records_set)
     for record in records_set:
-        sa_value = list_to_str(record[-1])
+        try:
+            sa_value = list_to_str(record[-1])
+        except AttributeError:
+            sa_value = record[-1]
         try:
             sa_dict[sa_value] += 1
         except KeyError:
             sa_dict[sa_value] = 1
     if len(sa_dict.keys()) < GL_L:
         return False
-    for sa in sa_dict.keys():
+    for sa_value in sa_dict.keys():
         # if any SA value appear more than |T|/l,
         # the partition does not satisfy l-diversity
-        if sa_dict[sa] > 1.0 * num_record / GL_L:
+        if sa_dict[sa_value] > 1.0 * num_record / GL_L:
             return False
     return True
 
@@ -129,9 +141,9 @@ def choose_dimension(partition):
     for i in range(QI_LEN):
         if partition.allow[i] == 0:
             continue
-        normWidth = get_normalized_width(partition, i)
-        if normWidth > max_witdh:
-            max_witdh = normWidth
+        norm_width = get_normalized_width(partition, i)
+        if norm_width > max_witdh:
+            max_witdh = norm_width
             max_dim = i
     if max_witdh > 1:
         print "Error: max_witdh > 1"
@@ -171,10 +183,10 @@ def find_median(partition, dim):
         return '', ''
     index = 0
     split_index = 0
-    for i, t in enumerate(value_list):
-        index += frequency[t]
+    for i, qid_value in enumerate(value_list):
+        index += frequency[qid_value]
         if index >= middle:
-            splitVal = t
+            splitVal = qid_value
             split_index = i
             break
     else:
@@ -186,7 +198,7 @@ def find_median(partition, dim):
     return (splitVal, nextVal)
 
 
-def split_numeric_value(numeric_value, splitVal):
+def split_numeric_value(numeric_value, splitVal, nextVal):
     """
     split numeric value on splitVal
     return sub ranges
@@ -205,7 +217,7 @@ def split_numeric_value(numeric_value, splitVal):
         if high == splitVal:
             rvalue = high
         else:
-            rvalue = splitVal + ',' + high
+            rvalue = nextVal + ',' + high
         return lvalue, rvalue
 
 
@@ -234,7 +246,7 @@ def anonymize(partition):
             middle_pos = ATT_TREES[dim].dict[splitVal]
             lhs_middle = pmiddle[:]
             rhs_middle = pmiddle[:]
-            lhs_middle[dim], rhs_middle[dim] = split_numeric_value(pmiddle[dim], splitVal)
+            lhs_middle[dim], rhs_middle[dim] = split_numeric_value(pmiddle[dim], splitVal, nextVal)
             lhs_width = pwidth[:]
             rhs_width = pwidth[:]
             lhs_width[dim] = (pwidth[dim][0], middle_pos)
@@ -301,24 +313,27 @@ def anonymize(partition):
     RESULT.append(partition)
 
 
-def init(att_trees, data, L):
+def init(att_trees, data, L, QI_num=-1):
     """
     resset global variables
     """
     global GL_L, RESULT, QI_LEN, ATT_TREES, QI_RANGE, IS_CAT
     ATT_TREES = att_trees
+    if QI_num <= 0:
+        QI_LEN = len(data[0]) - 1
+    else:
+        QI_LEN = QI_num
     for gen_tree in att_trees:
         if isinstance(gen_tree, NumRange):
             IS_CAT.append(False)
         else:
             IS_CAT.append(True)
-    QI_LEN = len(data[0]) - 1
     GL_L = L
     RESULT = []
     QI_RANGE = []
 
 
-def mondrian_l_diversity(att_trees, data, L):
+def mondrian_l_diversity(att_trees, data, l, QI_num=-1):
     """
     Mondrian for l-diversity.
     This fuction support both numeric values and categoric values.
@@ -326,8 +341,7 @@ def mondrian_l_diversity(att_trees, data, L):
     For categoric values, each iterator is a split on GH.
     The final result is returned in 2-dimensional list.
     """
-    print "L=%d" % L
-    init(att_trees, data, L)
+    init(att_trees, data, l, QI_num)
     middle = []
     result = []
     wtemp = []
@@ -341,7 +355,9 @@ def mondrian_l_diversity(att_trees, data, L):
             wtemp.append(ATT_TREES[i]['*'].support)
             middle.append('*')
     whole_partition = Partition(data, wtemp, middle)
+    start_time = time.time()
     anonymize(whole_partition)
+    rtime = float(time.time() - start_time)
     ncp = 0.0
     dp = 0.0
     for partition in RESULT:
@@ -358,11 +374,15 @@ def mondrian_l_diversity(att_trees, data, L):
     ncp /= len(data)
     ncp *= 100
     if __DEBUG:
+        print "L=%d" % l
         from decimal import Decimal
         print "Discernability Penalty=%.2E" % Decimal(str(dp))
         print "Diversity", check_diversity(data)
-        print "size of partitions"
-        print len(RESULT)
+        # If the number of raw data is not eual to number published data
+        # there must be some problems.
+        print "size of partitions", len(RESULT)
+        print "Number of Raw Data", len(data)
+        print "Number of Published Data", sum([len(t) for t in RESULT])
         # print [len(t) for t in RESULT]
         print "NCP = %.2f %%" % ncp
-    return result
+    return (result, (ncp, rtime))

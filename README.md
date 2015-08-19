@@ -9,6 +9,11 @@ Researches on data privacy have lasted for more than ten years, lots of great pa
 
 I decided to make some effort. Hoping these open source repositories can help researchers and developers on data privacy (privacy preserving data publishing).
 
+### Attention
+I used **both adult and INFORMS** dataset in this implementation. For clarification, **we transform NCP to percentage**. This NCP percentage is computed by dividing NCP value with the number of values in dataset (also called GCP[4]). The range of NCP percentage is from 0 to 1, where 0 means no information loss, 1 means loses all information (more meaningful than raw NCP, which is sensitive to size of dataset). 
+
+The Final NCP of Mondrian on adult dataset is about 79.04%, while 11.01% on INFORMS data (with L=5).
+
 
 ### Usage:
 My Implementation is based on Python 2.7 (not Python 3.0). Please make sure your Python environment is correctly installed. You can run Mondrian in following steps: 
@@ -18,12 +23,16 @@ My Implementation is based on Python 2.7 (not Python 3.0). Please make sure your
 2) Run "anonymized.py" in root dir with CLI.
 
 
-	# run Mondrian with default l(l=10)
+Parameters:
+
+	# run Mondrian with adult data and default l(l=5)
 	python anonymizer.py 
 	
-	# run Mondrian with l=20
-	python anonymized.py 20
+	# run Mondrian with adult data l=10
+	python anonymized.py a 10
 
+	a: adult dataset, i: INFORMS ataset
+	l: varying l, qi: varying qi numbers, data: varying size of dataset, one: run only once
 
 ## For more information:
 [1]  LeFevre, Kristen, David J. DeWitt, and Raghu Ramakrishnan. Mondrian multidimensional k-anonymity. Data Engineering, 2006. ICDE'06. Proceedings of the 22nd International Conference on. IEEE, 2006.

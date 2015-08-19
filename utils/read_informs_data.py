@@ -1,4 +1,8 @@
-#!/usr/bin/env python
+"""
+read infroms data
+"""
+
+# !/usr/bin/env python
 # coding=utf-8
 
 # Read data and read tree fuctions for INFORMS data
@@ -6,25 +10,19 @@
 # condition att ['DUID', 'DUPERSID', 'ICD9CODX', 'year']
 from models.gentree import GenTree
 from models.numrange import NumRange
+from utils.utility import cmp_str
 import pickle
+import pdb
 
 
 __DEBUG = False
 USER_ATT = ['DUID', 'PID', 'DUPERSID', 'DOBMM', 'DOBYY', 'SEX',
             'RACEX', 'RACEAX', 'RACEBX', 'RACEWX', 'RACETHNX',
-            'HISPANX', 'HISPCAT', 'EDUCYEAR', 'Year', 'marry',
-            'income', 'poverty']
+            'HISPANX', 'HISPCAT', 'EDUCYEAR', 'Year', 'marry', 'income', 'poverty']
 CONDITION_ATT = ['DUID', 'DUPERSID', 'ICD9CODX', 'year']
 # Only 5 relational attributes and 1 transaction attribute are selected (according to Poulis's paper)
-# DOBMM DOBYY RACEX, EDUCYEAR, income
 QI_INDEX = [3, 4, 6, 13, 16]
 IS_CAT = [True, True, True, True, False]
-
-
-def cmp_str(element1, element2):
-    """compare number in str format correctley
-    """
-    return cmp(int(element1), int(element2))
 
 
 def read_tree():
@@ -38,41 +36,23 @@ def read_tree():
         if IS_CAT[i]:
             att_trees.append(read_tree_file(att_names[i]))
         else:
-            att_trees.append(pickle_static(QI_INDEX[i]))
+            att_trees.append(read_pickle_file(att_names[i]))
     return att_trees
 
 
-def pickle_static(index):
-    """pickle sorted values of BMS-WebView-2 to BMS_Static_value.pickle
+def read_pickle_file(att_name):
     """
-    userfile = open('data/demographics.csv', 'rU')
-    need_static = False
-    support = {}
+    read pickle file for numeric attributes
+    return numrange object
+    """
     try:
-        static_file = open('data/' + USER_ATT[index] + '_Static_value.pickle', 'rb')
-        print "Data exist..."
-        (support, sort_value) = pickle.load(static_file)
+        static_file = open('data/informs_' + att_name + '_static.pickle', 'rb')
+        (numeric_dict, sort_value) = pickle.load(static_file)
+        static_file.close()
+        result = NumRange(sort_value, numeric_dict)
+        return result
     except:
-        need_static = True
-        static_file = open('data/' + USER_ATT[index] + '_Static_value.pickle', 'wb')
-        print "Pickle Data..."
-        for i, line in enumerate(userfile):
-            line = line.strip()
-            if i == 0:
-                continue
-            # ignore first line of csv
-            row = line.split(',')
-            try:
-                support[row[index]] += 1
-            except:
-                support[row[index]] = 1
-        sort_value = support.keys()
-        sort_value.sort(cmp=cmp_str)
-        pickle.dump((support, sort_value), static_file)
-    static_file.close()
-    userfile.close()
-    result = NumRange(sort_value, support)
-    return result
+        print "Pickle file not exists!!"
 
 
 def read_tree_file(treename):
@@ -110,15 +90,20 @@ def read_tree_file(treename):
 
 
 def read_data(flag=0):
-    """read microda for *.txt and return read data
     """
-    """read microda for *.txt and return read data"""
+    read microda for *.txt and return read data
+    """
     data = []
     userfile = open('data/demographics.csv', 'rU')
     conditionfile = open('data/conditions.csv', 'rU')
     userdata = {}
+    numeric_dict = []
+    QI_num = len(QI_INDEX)
+    for i in range(QI_num):
+        numeric_dict.append(dict())
     # We selet 3,4,5,6,13,15,15 att from demographics05, and 2 from condition05
-    print "Reading Data..."
+    if __DEBUG:
+        print "Reading Data..."
     for i, line in enumerate(userfile):
         line = line.strip()
         # ignore first line of csv
@@ -129,7 +114,14 @@ def read_data(flag=0):
         try:
             userdata[row[2]].append(row)
         except:
-            userdata[row[2]] = row
+            userdata[row[2]] = [row]
+        for j in range(QI_num):
+            index = QI_INDEX[j]
+            if IS_CAT[j] is False:
+                try:
+                    numeric_dict[j][row[index]] += 1
+                except:
+                    numeric_dict[j][row[index]] = 1
     conditiondata = {}
     for i, line in enumerate(conditionfile):
         line = line.strip()
@@ -145,21 +137,41 @@ def read_data(flag=0):
             conditiondata[row[1]] = [row]
     hashdata = {}
     for k, v in userdata.iteritems():
+        if __DEBUG and len(v) > 1:
+            # check changes on QIDs excluding year(2003-2005)
+            for i in range(QI_num):
+                # year index = 14
+                if i == 14:
+                    continue
+                s = set()
+                for j in range(len(v)):
+                    s.add(v[j][i])
+                if len(s) > 1:
+                    print USER_ATT[i], s
+                    # pdb.set_trace()
         if k in conditiondata:
             # ingnore duplicate values
             temp = set()
             for t in conditiondata[k]:
                 temp.add(t[2])
             hashdata[k] = []
-            for i in range(len(QI_INDEX)):
+            for i in range(QI_num):
                 index = QI_INDEX[i]
-                hashdata[k].append(v[index])
+                # we assume that QIDs are not changed in dataset
+                hashdata[k].append(v[0][index])
             stemp = list(temp)
             # sort values
             stemp.sort()
             hashdata[k].append(stemp[:])
     for k, v in hashdata.iteritems():
         data.append(v)
+    for i in range(QI_num):
+        if IS_CAT[i] is False:
+            static_file = open('data/informs_' + USER_ATT[QI_INDEX[i]] + '_static.pickle', 'wb')
+            sort_value = list(numeric_dict[i].keys())
+            sort_value.sort(cmp=cmp_str)
+            pickle.dump((numeric_dict[i], sort_value), static_file)
+            static_file.close()
     userfile.close()
     conditionfile.close()
     return data
