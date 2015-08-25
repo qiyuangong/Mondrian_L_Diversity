@@ -303,7 +303,7 @@ def anonymize(partition):
                         continue
                     wtemp = pwidth[:]
                     mtemp = pmiddle[:]
-                    wtemp[dim] = sub_node[i].support
+                    wtemp[dim] = len(sub_node[i])
                     mtemp[dim] = sub_node[i].value
                     anonymize(Partition(sub_partition, wtemp, mtemp))
                 return
@@ -351,8 +351,8 @@ def mondrian_l_diversity(att_trees, data, l, QI_num=-1):
             wtemp.append((0, len(ATT_TREES[i].sort_value) - 1))
             middle.append(ATT_TREES[i].value)
         else:
-            QI_RANGE.append(ATT_TREES[i]['*'].support)
-            wtemp.append(ATT_TREES[i]['*'].support)
+            QI_RANGE.append(len(ATT_TREES[i]['*']))
+            wtemp.append(len(ATT_TREES[i]['*']))
             middle.append('*')
     whole_partition = Partition(data, wtemp, middle)
     start_time = time.time()
