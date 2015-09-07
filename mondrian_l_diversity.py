@@ -94,6 +94,8 @@ def check_L_diversity(partition):
     return True if satisfy, False if not.
     """
     sa_dict = {}
+    if len(partition) < GL_L:
+        return False
     if isinstance(partition, Partition):
         records_set = partition.member
     else:
@@ -179,7 +181,6 @@ def find_median(partition, dim):
     total = sum(frequency.values())
     middle = total / 2
     if middle < GL_L:
-        print "Error: size of group less than 2*L"
         return '', ''
     index = 0
     split_index = 0
@@ -226,9 +227,6 @@ def anonymize(partition):
     Main procedure of mondrian_l_diversity.
     recursively partition groups until not allowable.
     """
-    if len(partition) < GL_L * 2:
-        RESULT.append(partition)
-        return
     allow_count = sum(partition.allow)
     pwidth = partition.width
     pmiddle = partition.middle
@@ -241,8 +239,8 @@ def anonymize(partition):
             # numeric attributes
             (splitVal, nextVal) = find_median(partition, dim)
             if splitVal == '':
-                print "Error: splitVal= null"
-                pdb.set_trace()
+                partition.allow[dim] = 0
+                continue
             middle_pos = ATT_TREES[dim].dict[splitVal]
             lhs_middle = pmiddle[:]
             rhs_middle = pmiddle[:]
@@ -363,10 +361,10 @@ def mondrian_l_diversity(att_trees, data, l, QI_num=-1):
     for partition in RESULT:
         rncp = 0.0
         dp += len(partition) ** 2
-        for i in range(QI_LEN):
-            rncp += get_normalized_width(partition, i)
-        gen_result = partition.middle
-        for i in range(len(partition)):
+        for index in range(QI_LEN):
+            rncp += get_normalized_width(partition, index)
+        for index in range(len(partition)):
+            gen_result = partition.middle + [partition.member[index][-1]]
             result.append(gen_result[:])
         rncp *= len(partition)
         ncp += rncp
@@ -385,4 +383,7 @@ def mondrian_l_diversity(att_trees, data, l, QI_num=-1):
         print "Number of Published Data", sum([len(t) for t in RESULT])
         # print [len(t) for t in RESULT]
         print "NCP = %.2f %%" % ncp
+    if len(result) != len(data):
+        print "Error: lose records"
+        pdb.set_trace()
     return (result, (ncp, rtime))
