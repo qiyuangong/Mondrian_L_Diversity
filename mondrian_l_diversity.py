@@ -181,7 +181,7 @@ def find_median(partition, dim):
     total = sum(frequency.values())
     middle = total / 2
     if middle < GL_L:
-        return '', ''
+        return '', '', '', ''
     index = 0
     split_index = 0
     for i, qid_value in enumerate(value_list):
@@ -196,7 +196,7 @@ def find_median(partition, dim):
         nextVal = value_list[split_index + 1]
     except IndexError:
         nextVal = splitVal
-    return (splitVal, nextVal)
+    return (splitVal, nextVal, value_list[0], value_list[-1])
 
 
 def split_numeric_value(numeric_value, splitVal, nextVal):
@@ -228,16 +228,20 @@ def anonymize(partition):
     recursively partition groups until not allowable.
     """
     allow_count = sum(partition.allow)
-    pwidth = partition.width
-    pmiddle = partition.middle
     for index in range(allow_count):
         dim = choose_dimension(partition)
         if dim == -1:
             print "Error: dim=-1"
             pdb.set_trace()
+        pwidth = partition.width
+        pmiddle = partition.middle
         if IS_CAT[dim] is False:
             # numeric attributes
-            (splitVal, nextVal) = find_median(partition, dim)
+            (splitVal, nextVal, low, high) = find_median(partition, dim)
+            # update low and high
+            if low is not '':
+                partition.low[dim] = QI_DICT[dim][low]
+                partition.high[dim] = QI_DICT[dim][high]
             if splitVal == '':
                 partition.allow[dim] = 0
                 continue
