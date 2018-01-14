@@ -27,25 +27,16 @@ class test_mondrian_l_diversity(unittest.TestCase):
     def test_mondrian_l_diversity(self):
         init_tree()
         att_trees = [ATT_TREE]
-        data = [['a1', ['a1']],
-                ['b2', ['a1', 'a2']],
-                ['b1', ['b1', 'b2']],
-                ['b2', ['b1', 'b2']],
-                ['b1', ['a1', 'a2', 'b2']],
-                ['b2', ['a1', 'a2', 'b2']],
-                ['a1', ['a1', 'a2', 'b1', 'b2']]]
+        data = [['a1', 'a1'],
+                ['b2', 'a1'],
+                ['b1', 'b1'],
+                ['b2', 'b1'],
+                ['b1', 'b2'],
+                ['b2', 'b2'],
+                ['a1', 'a2']]
         result, eval_result = mondrian_l_diversity(att_trees, data, 2)
         self.assertTrue(abs(eval_result[0] - 0) <= 0.001)
 
-    def test_1M_Generalization__parititon_case(self):
-        init_tree()
-        att_trees = [ATT_TREE, ATT_TREE]
-        data = [['a1', ['a1', 'b1', 'b2']],
-                ['a1', ['a2', 'b1']],
-                ['a2', ['b1', 'a2']],
-                ['a2', ['a1', 'a2', 'b2']]]
-        result, eval_result = mondrian_l_diversity(att_trees, data, 2)
-        self.assertTrue(abs(eval_result[0] - 0) <= 0.001)
 
 if __name__ == '__main__':
     unittest.main()
