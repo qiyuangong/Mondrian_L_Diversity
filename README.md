@@ -1,4 +1,4 @@
-Mondrian for L-Diversity
+Mondrian for L-Diversity[![Build Status](https://travis-ci.org/qiyuangong/Mondrian_L_Diversity.svg?branch=master)](https://travis-ci.org/qiyuangong/Mondrian_L_Diversity)
 ===========================
 Mondrian is a Top-down greedy data anonymization algorithm for relational dataset, proposed by Kristen LeFevre in his papers[1]. To our knowledge, Mondrian is the fastest local recording algorithm, which preserve good data utility at the same time. Although LeFevre gave the pseudocode in his papers, the original source code is not available. You can find the Java implementation in Anonymization Toolbox[3]. Mondrian for L-diversity is based on InfoGain Mondrian[2], but more simple.
 
