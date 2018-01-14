@@ -13,7 +13,17 @@ import sys
 import copy
 import pdb
 
+
 DATA_SELECT = 'a'
+
+
+def write_to_file(result):
+    """
+    write the anonymized result to anonymized.data
+    """
+    with open("data/anonymized.data", "w") as output:
+        for r in result:
+            output.write(';'.join(r) + '\n')
 
 
 def get_result_one(att_trees, data, l=5):
@@ -22,9 +32,10 @@ def get_result_one(att_trees, data, l=5):
     """
     print "L=%d" % l
     data_back = copy.deepcopy(data)
-    _, eval_result = mondrian_l_diversity(att_trees, data, l)
+    result, eval_result = mondrian_l_diversity(att_trees, data, l)
+    write_to_file(result)
     data = copy.deepcopy(data_back)
-    print "NCP %0.2f" % eval_result[0] + "%"
+    print "NCP= %0.2f %%" % eval_result[0]
     print "Running time %0.2f" % eval_result[1] + " seconds"
 
 
