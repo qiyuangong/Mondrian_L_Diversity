@@ -17,13 +17,22 @@ import pdb
 DATA_SELECT = 'a'
 
 
+def extend_result(val):
+    """
+    separated with ',' if it is a list
+    """
+    if isinstance(val, list):
+        return ','.join(val)
+    return val
+
+
 def write_to_file(result):
     """
     write the anonymized result to anonymized.data
     """
     with open("data/anonymized.data", "w") as output:
         for r in result:
-            output.write(';'.join(r) + '\n')
+            output.write(';'.join(map(extend_result, r)) + '\n')
 
 
 def get_result_one(att_trees, data, l=5):
@@ -114,6 +123,8 @@ if __name__ == '__main__':
     if DATA_SELECT == 'i':
         print "INFORMS data"
         DATA = read_informs()
+        for r in DATA:
+            r[-1] = ','.join(r[-1])
         ATT_TREES = read_informs_tree()
     else:
         print "Adult data"
